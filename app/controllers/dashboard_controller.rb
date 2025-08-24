@@ -1,6 +1,6 @@
 class DashboardController < ApplicationController
   def index
-    @chats = Chat.order(created_at: :desc).limit(10)
+    @chats = Chat.order(created_at: :desc).limit(8)
     @llm_providers = LlmProvider.active
     @current_provider = LlmProvider.default_provider
     @connection_status = check_llm_connection_status
@@ -15,6 +15,27 @@ class DashboardController < ApplicationController
       message: status[:message],
       provider_name: @current_provider&.name,
       usage: status[:usage]
+    }
+  end
+
+  def load_more_chats
+    page = params[:page].to_i || 1
+    per_page = 10
+    offset = (page - 1) * per_page + 8 # Start after initial 8
+    
+    @chats = Chat.order(created_at: :desc)
+                 .offset(offset)
+                 .limit(per_page)
+    
+    render json: {
+      chats: @chats.map { |chat| {
+        id: chat.id,
+        title: chat.title,
+        message_count: chat.messages.count,
+        created_at: chat.created_at
+      }},
+      has_more: @chats.count == per_page,
+      next_page: page + 1
     }
   end
 

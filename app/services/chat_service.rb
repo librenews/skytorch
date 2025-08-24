@@ -14,13 +14,26 @@ class ChatService
     # Generate response using LLM
     response = @llm.complete
     
+    # Extract rate limit information from response headers
+    raw_response = response.instance_variable_get(:@raw)
+    headers = raw_response.env.response_headers
+    
     # Add assistant response to chat
     assistant_message = @chat.messages.create!(
       content: response.content,
       role: 'assistant'
     )
     
-    assistant_message
+    # Return both the message and rate limit info
+    {
+      message: assistant_message,
+      rate_limits: {
+        remaining_requests: headers['x-ratelimit-remaining-requests'],
+        limit_requests: headers['x-ratelimit-limit-requests'],
+        remaining_tokens: headers['x-ratelimit-remaining-tokens'],
+        limit_tokens: headers['x-ratelimit-limit-tokens']
+      }
+    }
   end
   
   private

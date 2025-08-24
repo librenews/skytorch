@@ -8,7 +8,8 @@ export default class extends Controller {
     this.currentChatId = null
     this.setupEventListeners()
     this.setupAutoResize()
-    this.startConnectionMonitoring()
+    this.startProviderMonitoring()
+    this.setupInfiniteScroll()
   }
   
   setupEventListeners() {
@@ -162,6 +163,8 @@ export default class extends Controller {
         console.log("New chat created:", chat)
         await this.loadChat(chat.id)
         await this.updateChatList()
+        // Reset infinite scroll since we have a new chat at the top
+        this.resetInfiniteScroll()
       }
     } catch (error) {
       console.error('Error creating chat:', error)
@@ -219,7 +222,7 @@ export default class extends Controller {
     this.messagesContainerTarget.innerHTML = `
       <div class="text-center py-12">
         <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-          <span class="text-3xl">🔥</span>
+          <span class="text-3xl">🚀</span>
         </div>
         <h3 class="text-lg font-medium text-gray-900 mb-2">New Chat Started</h3>
         <p class="text-gray-500">Start typing to begin your conversation with AI</p>
@@ -292,6 +295,10 @@ export default class extends Controller {
           
           // Update the chat list to reflect the new message count
           await this.updateChatList()
+          
+          // Update provider usage from the response data
+          console.log('Updating usage from message response...')
+          this.updateUsageFromResult(result)
         }
       }
     } catch (error) {
@@ -363,7 +370,9 @@ export default class extends Controller {
         const chats = await response.json()
         const chatList = document.getElementById('chat-list')
         if (chatList) {
-          chatList.innerHTML = chats.map(chat => `
+          // Only update the first 8 chats (initial load)
+          const initialChats = chats.slice(0, 8)
+          chatList.innerHTML = initialChats.map(chat => `
             <button class="chat-item w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors" data-chat-id="${chat.id}">
               <div class="flex items-center space-x-3">
                 <div class="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center">
@@ -378,6 +387,9 @@ export default class extends Controller {
               </div>
             </button>
           `).join('')
+          
+          // Reset infinite scroll state
+          this.resetInfiniteScroll()
         }
       }
     } catch (error) {
@@ -385,15 +397,15 @@ export default class extends Controller {
     }
   }
 
-  startConnectionMonitoring() {
-    // Check connection status every 30 seconds
-    this.checkConnectionStatus()
+  startProviderMonitoring() {
+    // Check provider status every 30 seconds
+    this.checkProviderStatus()
     setInterval(() => {
-      this.checkConnectionStatus()
+      this.checkProviderStatus()
     }, 30000) // 30 seconds
   }
 
-  async checkConnectionStatus() {
+  async checkProviderStatus() {
     try {
       const response = await fetch('/dashboard/connection_status', {
         headers: {
@@ -403,42 +415,132 @@ export default class extends Controller {
       
       if (response.ok) {
         const status = await response.json()
-        this.updateConnectionIndicator(status)
+        this.updateProviderIndicator(status)
       }
     } catch (error) {
-      console.error('Error checking connection status:', error)
-      this.updateConnectionIndicator({
+      console.error('Error checking provider status:', error)
+      this.updateProviderIndicator({
         status: 'disconnected',
         message: 'Connection check failed'
       })
     }
   }
 
-  updateConnectionIndicator(status) {
-    const indicator = document.querySelector('#chat-header .flex.items-center.space-x-2')
+  updateProviderIndicator(status) {
+    const indicator = document.getElementById('provider-status-indicator')
+    const requestsUsage = document.getElementById('requests-usage')
+    const tokensUsage = document.getElementById('tokens-usage')
+    
     if (!indicator) return
 
-    const dot = indicator.querySelector('.w-2.h-2')
-    const text = indicator.querySelector('span')
-
+    // Update status indicator
     if (status.status === 'connected') {
-      dot.className = 'w-2 h-2 bg-green-400 rounded-full animate-pulse'
-      text.className = 'text-sm text-green-600 font-medium'
-      text.textContent = status.message
+      indicator.innerHTML = '<div class="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>'
     } else if (status.status === 'warning') {
-      dot.className = 'w-2 h-2 bg-yellow-400 rounded-full animate-pulse'
-      text.className = 'text-sm text-yellow-600 font-medium'
-      text.textContent = status.message
+      indicator.innerHTML = '<div class="w-3 h-3 bg-yellow-400 rounded-full animate-pulse"></div>'
     } else {
-      dot.className = 'w-2 h-2 bg-red-400 rounded-full'
-      text.className = 'text-sm text-red-600 font-medium'
-      text.textContent = status.message
+      indicator.innerHTML = '<div class="w-3 h-3 bg-red-400 rounded-full"></div>'
     }
 
-    // Add usage tooltip if available
-    if (status.usage) {
-      const tooltip = this.createUsageTooltip(status.usage)
-      indicator.title = tooltip
+    // Update usage information
+    if (status.usage && requestsUsage && tokensUsage) {
+      const requests = status.usage.requests
+      const tokens = status.usage.tokens
+      
+      requestsUsage.textContent = `${requests.used}/${requests.limit}`
+      tokensUsage.textContent = `${tokens.used}/${tokens.limit}`
+    }
+  }
+
+  updateUsageFromResult(result) {
+    console.log('Extracting usage from response data...')
+    
+    if (result.rate_limits) {
+      const { remaining_requests, limit_requests, remaining_tokens, limit_tokens } = result.rate_limits
+      
+      console.log('Rate limit data:', {
+        remaining_requests,
+        limit_requests,
+        remaining_tokens,
+        limit_tokens
+      })
+      
+      if (remaining_requests && limit_requests && remaining_tokens && limit_tokens) {
+        const usedRequests = parseInt(limit_requests) - parseInt(remaining_requests)
+        const usedTokens = parseInt(limit_tokens) - parseInt(remaining_tokens)
+        
+        const requestsUsage = document.getElementById('requests-usage')
+        const tokensUsage = document.getElementById('tokens-usage')
+        
+        if (requestsUsage && tokensUsage) {
+          requestsUsage.textContent = `${usedRequests}/${limit_requests}`
+          tokensUsage.textContent = `${usedTokens}/${limit_tokens}`
+          
+          // Add visual feedback
+          requestsUsage.style.backgroundColor = '#fef3c7'
+          tokensUsage.style.backgroundColor = '#fef3c7'
+          
+          setTimeout(() => {
+            requestsUsage.style.backgroundColor = ''
+            tokensUsage.style.backgroundColor = ''
+          }, 1000)
+          
+          console.log('Usage updated from response data:', { usedRequests, usedTokens })
+        }
+      }
+    } else {
+      console.log('Rate limit data not found in response')
+    }
+  }
+
+  async updateProviderUsageAfterMessage() {
+    console.log('Updating provider usage after message...')
+    try {
+      const response = await fetch('/dashboard/connection_status', {
+        headers: {
+          'Accept': 'application/json'
+        }
+      })
+      
+      if (response.ok) {
+        const status = await response.json()
+        console.log('Received status:', status)
+        
+        // Only update usage, not the status indicator
+        const requestsUsage = document.getElementById('requests-usage')
+        const tokensUsage = document.getElementById('tokens-usage')
+        
+        console.log('Found elements:', { requestsUsage, tokensUsage })
+        
+        if (status.usage && requestsUsage && tokensUsage) {
+          const requests = status.usage.requests
+          const tokens = status.usage.tokens
+          
+          console.log('Updating usage:', { requests, tokens })
+          
+          requestsUsage.textContent = `${requests.used}/${requests.limit}`
+          tokensUsage.textContent = `${tokens.used}/${tokens.limit}`
+          
+          // Add visual feedback
+          requestsUsage.style.backgroundColor = '#fef3c7'
+          tokensUsage.style.backgroundColor = '#fef3c7'
+          
+          setTimeout(() => {
+            requestsUsage.style.backgroundColor = ''
+            tokensUsage.style.backgroundColor = ''
+          }, 1000)
+          
+          console.log('Usage updated successfully')
+        } else {
+          console.log('Missing elements or usage data:', { 
+            hasUsage: !!status.usage, 
+            hasRequestsUsage: !!requestsUsage, 
+            hasTokensUsage: !!tokensUsage 
+          })
+        }
+      }
+    } catch (error) {
+      console.error('Error updating provider usage after message:', error)
     }
   }
 
@@ -450,5 +552,131 @@ export default class extends Controller {
 Requests: ${requests.used}/${requests.limit} (${requests.percentage}%)
 Tokens: ${tokens.used}/${tokens.limit} (${tokens.percentage}%)
 Reset: ${usage.reset_requests}`
+  }
+
+  setupInfiniteScroll() {
+    this.currentPage = 1
+    this.isLoading = false
+    this.hasMore = true
+    
+    const container = document.getElementById('chat-list-container')
+    if (!container) return
+    
+    // Force scrollbar to be visible
+    container.style.overflowY = 'scroll'
+    
+    container.addEventListener('scroll', (e) => {
+      this.handleScroll(e)
+    })
+    
+    // Log scroll container info for debugging
+    console.log('Scroll container setup:', {
+      element: container,
+      scrollHeight: container.scrollHeight,
+      clientHeight: container.clientHeight,
+      hasScrollbar: container.scrollHeight > container.clientHeight
+    })
+  }
+
+  handleScroll(e) {
+    const container = e.target
+    const scrollTop = container.scrollTop
+    const scrollHeight = container.scrollHeight
+    const clientHeight = container.clientHeight
+    
+    // Check if we're near the bottom (within 50px)
+    if (scrollHeight - scrollTop - clientHeight < 50 && !this.isLoading && this.hasMore) {
+      this.loadMoreChats()
+    }
+  }
+
+  async loadMoreChats() {
+    if (this.isLoading || !this.hasMore) return
+    
+    this.isLoading = true
+    this.showLoadingIndicator()
+    
+    try {
+      const response = await fetch(`/dashboard/load_more_chats?page=${this.currentPage}`, {
+        headers: {
+          'Accept': 'application/json'
+        }
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        this.appendChats(data.chats)
+        this.hasMore = data.has_more
+        this.currentPage = data.next_page
+        
+        if (!this.hasMore) {
+          this.showEndIndicator()
+        }
+      }
+    } catch (error) {
+      console.error('Error loading more chats:', error)
+    } finally {
+      this.isLoading = false
+      this.hideLoadingIndicator()
+    }
+  }
+
+  appendChats(chats) {
+    const chatList = document.getElementById('chat-list')
+    if (!chatList) return
+    
+    chats.forEach(chat => {
+      const chatElement = document.createElement('button')
+      chatElement.className = 'chat-item w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors'
+      chatElement.dataset.chatId = chat.id
+      
+      chatElement.innerHTML = `
+        <div class="flex items-center space-x-3">
+          <div class="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center">
+            <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+            </svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium text-gray-900 truncate">${chat.title}</p>
+            <p class="text-xs text-gray-500">${chat.message_count} message${chat.message_count !== 1 ? 's' : ''}</p>
+          </div>
+        </div>
+      `
+      
+      chatList.appendChild(chatElement)
+    })
+  }
+
+  showLoadingIndicator() {
+    const loading = document.getElementById('chat-loading')
+    if (loading) {
+      loading.classList.remove('hidden')
+    }
+  }
+
+  hideLoadingIndicator() {
+    const loading = document.getElementById('chat-loading')
+    if (loading) {
+      loading.classList.add('hidden')
+    }
+  }
+
+  showEndIndicator() {
+    const end = document.getElementById('chat-end')
+    if (end) {
+      end.classList.remove('hidden')
+    }
+  }
+
+  resetInfiniteScroll() {
+    this.currentPage = 1
+    this.isLoading = false
+    this.hasMore = true
+    
+    const end = document.getElementById('chat-end')
+    if (end) {
+      end.classList.add('hidden')
+    }
   }
 }

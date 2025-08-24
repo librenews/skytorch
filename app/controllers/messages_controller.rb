@@ -7,18 +7,19 @@ class MessagesController < ApplicationController
     if @message.save
       # Use ChatService to process the message with LLM and MCP
       chat_service = ChatService.new(@chat)
-      response = chat_service.send_message(@message.content)
+      result = chat_service.send_message(@message.content)
       
       respond_to do |format|
         format.html { redirect_to @chat, notice: 'Message sent successfully.' }
         format.json { render json: { 
           success: true, 
           assistant_message: { 
-            id: response.id, 
-            role: response.role, 
-            content: response.content, 
-            created_at: response.created_at 
-          }
+            id: result[:message].id, 
+            role: result[:message].role, 
+            content: result[:message].content, 
+            created_at: result[:message].created_at 
+          },
+          rate_limits: result[:rate_limits]
         }}
       end
     else
