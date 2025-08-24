@@ -6,4 +6,7 @@ const application = Application.start()
 application.debug = false
 window.Stimulus   = application
 
+console.log("Stimulus application started")
+console.log("Available controllers:", application.controllers)
+
 export { application }

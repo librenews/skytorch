@@ -16,7 +16,11 @@
 
     <%# Includes all stylesheet files in app/assets/stylesheets %>
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
-    <%= javascript_include_tag "application", "data-turbo-track": "reload", type: "module" %>
+    <%= javascript_include_tag "application", "data-turbo-track": "reload" %>
+    
+    <script>
+      console.log("JavaScript loaded successfully");
+    </script>
   </head>
 
   <body class="h-full">
