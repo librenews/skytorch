@@ -1,7 +1,8 @@
 class ChatService
-  def initialize(chat)
+  def initialize(chat, provider = nil)
     @chat = chat
-    @llm = RubyLLM::Client.new(provider: :mock)
+    @provider = provider || LlmProvider.default_provider
+    @llm = create_llm_client
   end
   
   def send_message(content)
@@ -41,6 +42,15 @@ class ChatService
   end
   
   private
+  
+  def create_llm_client
+    if @provider
+      RubyLLM::Client.new(@provider.provider_config)
+    else
+      # Fallback to mock provider if no provider is configured
+      RubyLLM::Client.new(provider: :mock)
+    end
+  end
   
   def handle_tool_calls(tool_calls, message)
     tool_calls.each do |tool_call|

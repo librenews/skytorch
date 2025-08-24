@@ -1,8 +1,16 @@
 Rails.application.routes.draw do
+  get "llm_providers/index"
+  get "llm_providers/create"
+  get "llm_providers/update"
+  get "llm_providers/destroy"
   # Chat routes
   resources :chats, only: [:index, :show, :new, :create] do
     resources :messages, only: [:create]
   end
+  
+  # LLM Provider routes
+  resources :llm_providers, only: [:index, :create, :update, :destroy]
+  post "llm_providers/:id/set_default", to: "llm_providers#set_default", as: :set_default_llm_provider
   
   # MCP server endpoint
   post "mcp", to: "mcp#handle"

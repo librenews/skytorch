@@ -1,0 +1,97 @@
+<div class="min-h-screen bg-gray-50">
+  <div class="max-w-6xl mx-auto py-8 px-4">
+    <div class="flex justify-between items-center mb-8">
+      <h1 class="text-3xl font-bold text-gray-900">LLM Provider Management</h1>
+      <%= link_to "← Back to chats", chats_path, class: "text-blue-600 hover:text-blue-700 font-medium" %>
+    </div>
+    
+    <!-- Add New Provider Form -->
+    <div class="bg-white rounded-lg shadow-sm border p-6 mb-8">
+      <h2 class="text-xl font-semibold text-gray-900 mb-4">Add New Provider</h2>
+      
+      <%= form_with model: @new_provider, url: llm_providers_path, local: true, class: "space-y-4" do |form| %>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <%= form.label :provider_type, "Provider Type", class: "block text-sm font-medium text-gray-700 mb-2" %>
+            <%= form.select :provider_type, 
+                options_for_select([
+                  ["OpenAI", "openai"],
+                  ["Anthropic Claude", "anthropic"],
+                  ["Google Gemini", "google"],
+                  ["Mock Provider", "mock"]
+                ]), 
+                { prompt: "Select a provider" },
+                { class: "w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" } %>
+          </div>
+          
+          <div>
+            <%= form.label :api_key, "API Key", class: "block text-sm font-medium text-gray-700 mb-2" %>
+            <%= form.password_field :api_key, 
+                class: "w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent",
+                placeholder: "Enter your API key..." %>
+          </div>
+          
+          <div class="flex items-end">
+            <%= form.submit "Add Provider", class: "w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors" %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+    
+    <!-- Existing Providers -->
+    <div class="bg-white rounded-lg shadow-sm border">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <h2 class="text-xl font-semibold text-gray-900">Configured Providers</h2>
+      </div>
+      
+      <% if @llm_providers.any? %>
+        <div class="divide-y divide-gray-200">
+          <% @llm_providers.each do |provider| %>
+            <div class="p-6">
+              <div class="flex justify-between items-start">
+                <div class="flex-1">
+                  <div class="flex items-center space-x-3">
+                    <h3 class="text-lg font-medium text-gray-900"><%= provider.name %></h3>
+                    <% if provider.is_active %>
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        Default
+                      </span>
+                    <% end %>
+                  </div>
+                  <p class="text-sm text-gray-500 mt-1">
+                    Type: <%= provider.provider_type.titleize %> • 
+                    Model: <%= provider.default_model %> • 
+                    Base URL: <%= provider.base_url || "Default" %>
+                  </p>
+                </div>
+                
+                <div class="flex space-x-2">
+                  <% unless provider.is_active %>
+                    <%= button_to "Set as Default", set_default_llm_provider_path(provider), 
+                        method: :post, 
+                        class: "px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded transition-colors" %>
+                  <% end %>
+                  
+                  <%= button_to "Delete", llm_provider_path(provider), 
+                      method: :delete, 
+                      class: "px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded transition-colors",
+                      data: { confirm: "Are you sure you want to delete this provider?" } %>
+                </div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <div class="p-12 text-center">
+          <div class="text-gray-400 mb-4">
+            <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+            </svg>
+          </div>
+          <h3 class="text-lg font-medium text-gray-900 mb-2">No providers configured</h3>
+          <p class="text-gray-500">Add your first LLM provider above to start using AI chat functionality.</p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

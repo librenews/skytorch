@@ -1,0 +1,17 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  name: MyString
+  provider_type: MyString
+  api_key: MyString
+  base_url: MyString
+  default_model: MyString
+  is_active: false
+
+two:
+  name: MyString
+  provider_type: MyString
+  api_key: MyString
+  base_url: MyString
+  default_model: MyString
+  is_active: false

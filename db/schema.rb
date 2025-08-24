@@ -10,12 +10,23 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_24_104436) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_24_112050) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
   create_table "chats", force: :cascade do |t|
     t.string "title"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "llm_providers", force: :cascade do |t|
+    t.string "name"
+    t.string "provider_type"
+    t.string "api_key"
+    t.string "base_url"
+    t.string "default_model"
+    t.boolean "is_active"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
