@@ -1,4 +1,5 @@
 Rails.application.routes.draw do
+  get "dashboard/index"
   get "llm_providers/index"
   get "llm_providers/create"
   get "llm_providers/update"
@@ -16,7 +17,7 @@ Rails.application.routes.draw do
   post "mcp", to: "mcp#handle"
   
   # Root route
-  root "chats#index"
+  root "dashboard#index"
   
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 

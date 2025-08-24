@@ -9,9 +9,23 @@ class MessagesController < ApplicationController
       chat_service = ChatService.new(@chat)
       response = chat_service.send_message(@message.content)
       
-      redirect_to @chat, notice: 'Message sent successfully.'
+      respond_to do |format|
+        format.html { redirect_to @chat, notice: 'Message sent successfully.' }
+        format.json { render json: { 
+          success: true, 
+          assistant_message: { 
+            id: response.id, 
+            role: response.role, 
+            content: response.content, 
+            created_at: response.created_at 
+          }
+        }}
+      end
     else
-      redirect_to @chat, alert: 'Failed to send message.'
+      respond_to do |format|
+        format.html { redirect_to @chat, alert: 'Failed to send message.' }
+        format.json { render json: { errors: @message.errors }, status: :unprocessable_entity }
+      end
     end
   end
   
