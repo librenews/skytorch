@@ -54,6 +54,21 @@ gem "mcp"
 # Environment variable management
 gem "dotenv-rails"
 
+# Authentication and OAuth
+gem "omniauth"
+gem "omniauth-rails_csrf_protection"
+gem "omniauth-atproto"
+
+# HTTP client for API requests
+gem "faraday"
+gem "faraday-retry"
+
+# JWT for DPoP token generation
+gem "jwt"
+
+# AT Protocol API client
+gem "minisky", "~> 0.5"
+
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri mswin mswin64 mingw x64_mingw ], require: "debug/prelude"

@@ -21,7 +21,10 @@ module Skytorch
     # These settings can be overridden in specific environments using the files
     # in config/environments, which are processed later.
     #
-    # config.time_zone = "Central Time (US & Canada)"
-    # config.eager_load_paths << Rails.root.join("extras")
-  end
+          # config.time_zone = "Central Time (US & Canada)"
+      # config.eager_load_paths << Rails.root.join("extras")
+      
+      # OAuth configuration
+      config.app_url = ENV.fetch('APP_URL', 'https://dev.libre.news')
+    end
 end

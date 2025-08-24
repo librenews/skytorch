@@ -1,0 +1,33 @@
+{
+  "client_id": "https://dev.libre.news/oauth/client-metadata.json",
+  "application_type": "web",
+  "client_name": "Skytorch",
+  "client_uri": "https://dev.libre.news",
+  "dpop_bound_access_tokens": true,
+  "grant_types": [
+    "authorization_code",
+    "refresh_token"
+  ],
+  "redirect_uris": [
+    "https://dev.libre.news/auth/atproto/callback"
+  ],
+  "response_types": [
+    "code"
+  ],
+  "scope": "atproto transition:generic transition:chat.bsky",
+  "token_endpoint_auth_method": "private_key_jwt",
+  "token_endpoint_auth_signing_alg": "ES256",
+  "jwks": {
+    "keys": [
+      {
+        "kty": "EC",
+        "crv": "P-256",
+        "x": "_274bGiHrFPnJVWy4PkdxJb3R38286rsrCFwUhlSHgg",
+        "y": "YRAtozjrHmct2tBcFcK1HVFPpLxBSidCT2Kb_cJEr54",
+        "use": "sig",
+        "alg": "ES256",
+        "kid": "3533de4e-8f61-4777-8011-d07eebdafd3a"
+      }
+    ]
+  }
+}

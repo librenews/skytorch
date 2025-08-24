@@ -1,5 +1,16 @@
 Rails.application.routes.draw do
-  get "dashboard/index"
+  # OAuth routes
+  get "/auth/atproto", to: redirect("/auth/atproto"), as: :omniauth_authorize
+  get "/auth/atproto/callback", to: "sessions#omniauth"
+  post "/auth/atproto/callback", to: "sessions#omniauth"
+  get "/auth/failure", to: "sessions#failure"
+  delete "/sign_out", to: "sessions#destroy", as: :sign_out
+  get "/sign_out", to: "sessions#destroy"
+
+  # Login route
+  get "login", to: "login#index", as: :login
+
+  get "dashboard/index", as: :dashboard
   get "dashboard/connection_status", to: "dashboard#connection_status"
   get "dashboard/load_more_chats", to: "dashboard#load_more_chats"
   get "llm_providers/index"
@@ -19,7 +30,7 @@ Rails.application.routes.draw do
   post "mcp", to: "mcp#handle"
   
   # Root route
-  root "dashboard#index"
+  root "login#index"
   
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 

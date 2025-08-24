@@ -1,0 +1,15 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  bluesky_did: MyString
+  bluesky_handle: MyString
+  display_name: MyString
+  avatar_url: MyString
+  is_admin: false
+
+two:
+  bluesky_did: MyString
+  bluesky_handle: MyString
+  display_name: MyString
+  avatar_url: MyString
+  is_admin: false

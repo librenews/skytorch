@@ -1,19 +1,22 @@
 class DashboardController < ApplicationController
+  before_action :set_current_user
+
   def index
-    @chats = Chat.order(created_at: :desc).limit(8)
-    @llm_providers = LlmProvider.active
-    @current_provider = LlmProvider.default_provider
+    @chats = current_user.chats.recent.limit(8)
+    @llm_providers = current_user.using_global_provider? ? LlmProvider.global : current_user.llm_providers
+    @current_provider = current_user.default_provider
     @connection_status = check_llm_connection_status
   end
 
   def connection_status
-    @current_provider = LlmProvider.default_provider
+    @current_provider = current_user.default_provider
     status = check_llm_connection_status
     
     render json: {
       status: status[:status],
       message: status[:message],
       provider_name: @current_provider&.name,
+      provider_owner: @current_provider&.owner_name,
       usage: status[:usage]
     }
   end
@@ -23,7 +26,7 @@ class DashboardController < ApplicationController
     per_page = 10
     offset = (page - 1) * per_page + 8 # Start after initial 8
     
-    @chats = Chat.order(created_at: :desc)
+    @chats = current_user.chats.recent
                  .offset(offset)
                  .limit(per_page)
     
@@ -40,6 +43,10 @@ class DashboardController < ApplicationController
   end
 
   private
+
+  def set_current_user
+    @current_user = current_user
+  end
 
   def check_llm_connection_status
     return { status: 'disconnected', message: 'No active provider' } unless @current_provider
