@@ -8,6 +8,7 @@ export default class extends Controller {
     this.currentChatId = null
     this.setupEventListeners()
     this.setupAutoResize()
+    this.startConnectionMonitoring()
   }
   
   setupEventListeners() {
@@ -218,9 +219,7 @@ export default class extends Controller {
     this.messagesContainerTarget.innerHTML = `
       <div class="text-center py-12">
         <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-          </svg>
+          <span class="text-3xl">🔥</span>
         </div>
         <h3 class="text-lg font-medium text-gray-900 mb-2">New Chat Started</h3>
         <p class="text-gray-500">Start typing to begin your conversation with AI</p>
@@ -384,5 +383,72 @@ export default class extends Controller {
     } catch (error) {
       console.error('Error updating chat list:', error)
     }
+  }
+
+  startConnectionMonitoring() {
+    // Check connection status every 30 seconds
+    this.checkConnectionStatus()
+    setInterval(() => {
+      this.checkConnectionStatus()
+    }, 30000) // 30 seconds
+  }
+
+  async checkConnectionStatus() {
+    try {
+      const response = await fetch('/dashboard/connection_status', {
+        headers: {
+          'Accept': 'application/json'
+        }
+      })
+      
+      if (response.ok) {
+        const status = await response.json()
+        this.updateConnectionIndicator(status)
+      }
+    } catch (error) {
+      console.error('Error checking connection status:', error)
+      this.updateConnectionIndicator({
+        status: 'disconnected',
+        message: 'Connection check failed'
+      })
+    }
+  }
+
+  updateConnectionIndicator(status) {
+    const indicator = document.querySelector('#chat-header .flex.items-center.space-x-2')
+    if (!indicator) return
+
+    const dot = indicator.querySelector('.w-2.h-2')
+    const text = indicator.querySelector('span')
+
+    if (status.status === 'connected') {
+      dot.className = 'w-2 h-2 bg-green-400 rounded-full animate-pulse'
+      text.className = 'text-sm text-green-600 font-medium'
+      text.textContent = status.message
+    } else if (status.status === 'warning') {
+      dot.className = 'w-2 h-2 bg-yellow-400 rounded-full animate-pulse'
+      text.className = 'text-sm text-yellow-600 font-medium'
+      text.textContent = status.message
+    } else {
+      dot.className = 'w-2 h-2 bg-red-400 rounded-full'
+      text.className = 'text-sm text-red-600 font-medium'
+      text.textContent = status.message
+    }
+
+    // Add usage tooltip if available
+    if (status.usage) {
+      const tooltip = this.createUsageTooltip(status.usage)
+      indicator.title = tooltip
+    }
+  }
+
+  createUsageTooltip(usage) {
+    const requests = usage.requests
+    const tokens = usage.tokens
+    
+    return `API Usage:
+Requests: ${requests.used}/${requests.limit} (${requests.percentage}%)
+Tokens: ${tokens.used}/${tokens.limit} (${tokens.percentage}%)
+Reset: ${usage.reset_requests}`
   }
 }

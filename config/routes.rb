@@ -1,5 +1,6 @@
 Rails.application.routes.draw do
   get "dashboard/index"
+  get "dashboard/connection_status", to: "dashboard#connection_status"
   get "llm_providers/index"
   get "llm_providers/create"
   get "llm_providers/update"
