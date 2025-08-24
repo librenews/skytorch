@@ -230,7 +230,7 @@ export default class extends Controller {
   
   addMessage(message) {
     const messageElement = document.createElement('div')
-    messageElement.className = 'flex space-x-4'
+    messageElement.className = 'flex space-x-4 mb-4'
     
     const isUser = message.role === 'user'
     const alignment = isUser ? 'justify-end' : 'justify-start'
@@ -238,8 +238,7 @@ export default class extends Controller {
     
     messageElement.innerHTML = `
       <div class="flex ${alignment} w-full">
-        <div class="max-w-3xl ${bgColor} rounded-lg px-4 py-2">
-          <div class="text-sm font-medium mb-1">${message.role.charAt(0).toUpperCase() + message.role.slice(1)}</div>
+        <div class="max-w-3xl ${bgColor} rounded-lg px-4 py-3">
           <div class="whitespace-pre-wrap">${message.content}</div>
         </div>
       </div>
@@ -267,6 +266,9 @@ export default class extends Controller {
     this.messageInputTarget.scrollTop = 0 // Reset scroll position
     this.scrollToBottom()
     
+    // Show thinking indicator
+    this.showThinkingIndicator()
+    
     try {
       const response = await fetch(`/chats/${this.currentChatId}/messages`, {
         method: 'POST',
@@ -283,12 +285,20 @@ export default class extends Controller {
       if (response.ok) {
         const result = await response.json()
         if (result.assistant_message) {
+          // Hide thinking indicator
+          this.hideThinkingIndicator()
+          
           this.addMessage(result.assistant_message)
           this.scrollToBottom()
+          
+          // Update the chat list to reflect the new message count
+          await this.updateChatList()
         }
       }
     } catch (error) {
       console.error('Error sending message:', error)
+      // Hide thinking indicator on error
+      this.hideThinkingIndicator()
     }
   }
   
@@ -311,14 +321,45 @@ export default class extends Controller {
     this.settingsModalTarget.classList.add('hidden')
   }
   
+    showThinkingIndicator() {
+    const thinkingElement = document.createElement('div')
+    thinkingElement.className = 'flex space-x-4 mb-4'
+    thinkingElement.id = 'thinking-indicator'
+    
+    thinkingElement.innerHTML = `
+      <div class="flex justify-start w-full">
+        <div class="max-w-3xl bg-gray-100 text-gray-900 rounded-lg px-4 py-3">
+          <div class="flex items-center space-x-2">
+            <span class="text-gray-600 italic">Thinking</span>
+            <div class="thinking-dots">
+              <span class="dot">.</span>
+              <span class="dot">.</span>
+              <span class="dot">.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    `
+    
+    this.messagesContainerTarget.appendChild(thinkingElement)
+    this.scrollToBottom()
+  }
+  
+  hideThinkingIndicator() {
+    const thinkingElement = document.getElementById('thinking-indicator')
+    if (thinkingElement) {
+      thinkingElement.remove()
+    }
+  }
+  
   async updateChatList() {
     console.log("Updating chat list...")
     try {
-                    const response = await fetch('/chats', {
-                headers: {
-                  'Accept': 'application/json'
-                }
-              })
+      const response = await fetch('/chats', {
+        headers: {
+          'Accept': 'application/json'
+        }
+      })
       if (response.ok) {
         const chats = await response.json()
         const chatList = document.getElementById('chat-list')

@@ -1,31 +1,18 @@
+require 'ruby_llm'
+
 class ChatService
   def initialize(chat, provider = nil)
     @chat = chat
     @provider = provider || LlmProvider.default_provider
-    @llm = create_llm_client
+    configure_llm
   end
   
   def send_message(content)
-    # Add user message to chat
-    user_message = @chat.messages.create!(
-      content: content,
-      role: 'user'
-    )
+    # Add the user message to the LLM chat context
+    @llm.add_message(role: 'user', content: content)
     
-    # Get chat history for context
-    messages = @chat.messages.order(:created_at).map do |msg|
-      { role: msg.role, content: msg.content }
-    end
-    
-    # Get available tools from our MCP server
-    tools = SkytorchMcpServer.available_tools
-    
-    # Generate response using LLM with MCP tools
-    response = @llm.chat(
-      messages: messages,
-      tools: tools,
-      tool_choice: "auto"
-    )
+    # Generate response using LLM
+    response = @llm.complete
     
     # Add assistant response to chat
     assistant_message = @chat.messages.create!(
@@ -33,35 +20,32 @@ class ChatService
       role: 'assistant'
     )
     
-    # Handle tool calls if any
-    if response.tool_calls.any?
-      handle_tool_calls(response.tool_calls, assistant_message)
-    end
-    
     assistant_message
   end
   
   private
   
-  def create_llm_client
+  def configure_llm
     if @provider
-      RubyLLM::Client.new(@provider.provider_config)
+      # Configure ruby_llm with the provider settings
+      RubyLLM.configure do |config|
+        case @provider.provider_type
+        when 'openai'
+          config.openai_api_key = @provider.api_key
+          config.default_model = @provider.default_model if @provider.default_model.present?
+        when 'anthropic'
+          config.anthropic_api_key = @provider.api_key
+          config.default_model = @provider.default_model if @provider.default_model.present?
+        when 'google'
+          config.gemini_api_key = @provider.api_key
+          config.default_model = @provider.default_model if @provider.default_model.present?
+        end
+      end
+      
+      @llm = RubyLLM::Chat.new
     else
       # Fallback to mock provider if no provider is configured
-      RubyLLM::Client.new(provider: :mock)
-    end
-  end
-  
-  def handle_tool_calls(tool_calls, message)
-    tool_calls.each do |tool_call|
-      # Execute tool call through our MCP server
-      result = SkytorchMcpServer.call_tool(tool_call.name, tool_call.arguments)
-      
-      # Add tool result as a system message
-      @chat.messages.create!(
-        content: "Tool result: #{result}",
-        role: 'system'
-      )
+      @llm = RubyLLM::Chat.new
     end
   end
 end

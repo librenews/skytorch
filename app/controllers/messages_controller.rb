@@ -1,8 +1,8 @@
 class MessagesController < ApplicationController
   before_action :set_chat
   
-  def create
-    @message = @chat.messages.build(message_params)
+    def create
+    @message = @chat.messages.build(message_params.merge(role: 'user'))
     
     if @message.save
       # Use ChatService to process the message with LLM and MCP
