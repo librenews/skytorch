@@ -82,10 +82,60 @@ export default class extends Controller {
   
   setupAutoResize() {
     if (this.hasMessageInputTarget) {
-      this.messageInputTarget.addEventListener('input', () => {
-        this.messageInputTarget.style.height = 'auto'
-        this.messageInputTarget.style.height = this.messageInputTarget.scrollHeight + 'px'
+      const textarea = this.messageInputTarget
+      const minHeight = 44 // Minimum height in pixels
+      const maxHeight = 300 // Maximum height in pixels
+      
+      // Add custom scrollbar styles
+      textarea.style.resize = 'none'
+      textarea.style.overflowY = 'hidden' // Start with hidden scrollbar
+      textarea.style.scrollbarWidth = 'thin'
+      textarea.style.scrollbarColor = '#cbd5e1 #f1f5f9'
+      
+      // Add CSS for webkit scrollbar styling
+      const style = document.createElement('style')
+      style.textContent = `
+        textarea::-webkit-scrollbar {
+          width: 6px;
+        }
+        textarea::-webkit-scrollbar-track {
+          background: #f1f5f9;
+          border-radius: 3px;
+        }
+        textarea::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+          border-radius: 3px;
+        }
+        textarea::-webkit-scrollbar-thumb:hover {
+          background: #94a3b8;
+        }
+      `
+      document.head.appendChild(style)
+      
+      textarea.addEventListener('input', () => {
+        // Reset height to auto to get the correct scrollHeight
+        textarea.style.height = 'auto'
+        
+        // Calculate new height - allow it to grow up to maxHeight
+        const newHeight = Math.max(minHeight, Math.min(textarea.scrollHeight, maxHeight))
+        
+        // Only update if the height actually changed
+        if (parseInt(textarea.style.height) !== newHeight) {
+          textarea.style.height = newHeight + 'px'
+        }
+        
+        // Show scrollbar only when at maximum height
+        if (newHeight >= maxHeight) {
+          textarea.style.overflowY = 'auto'
+          // Scroll to bottom to show the latest content
+          textarea.scrollTop = textarea.scrollHeight
+        } else {
+          textarea.style.overflowY = 'hidden'
+        }
       })
+      
+      // Set initial height
+      textarea.style.height = minHeight + 'px'
     }
   }
   
@@ -211,9 +261,10 @@ export default class extends Controller {
     }
     this.addMessage(userMessage)
     
-    // Clear input and scroll
+    // Clear input and reset height
     this.messageInputTarget.value = ''
-    this.messageInputTarget.style.height = 'auto'
+    this.messageInputTarget.style.height = '44px' // Reset to minimum height
+    this.messageInputTarget.scrollTop = 0 // Reset scroll position
     this.scrollToBottom()
     
     try {
