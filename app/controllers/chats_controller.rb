@@ -1,6 +1,7 @@
 class ChatsController < ApplicationController
+  before_action :authenticate_user!
   def index
-    @chats = Chat.order(created_at: :desc)
+    @chats = current_user.chats.order(created_at: :desc)
     
     respond_to do |format|
       format.html
@@ -14,7 +15,7 @@ class ChatsController < ApplicationController
   end
 
   def show
-    @chat = Chat.find(params[:id])
+    @chat = current_user.chats.find(params[:id])
     @messages = @chat.messages.order(:created_at)
     
     respond_to do |format|
@@ -32,7 +33,7 @@ class ChatsController < ApplicationController
   end
 
   def create
-    @chat = Chat.new(chat_params)
+    @chat = current_user.chats.build(chat_params)
     
     if @chat.save
       respond_to do |format|
