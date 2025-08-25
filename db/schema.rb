@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_24_112050) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_24_235737) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -18,6 +18,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_24_112050) do
     t.string "title"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
   end
 
   create_table "llm_providers", force: :cascade do |t|
@@ -29,6 +30,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_24_112050) do
     t.boolean "is_active"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "user_id"
+    t.index ["user_id"], name: "index_llm_providers_on_user_id"
   end
 
   create_table "mcp_servers", force: :cascade do |t|
@@ -48,5 +51,19 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_24_112050) do
     t.index ["chat_id"], name: "index_messages_on_chat_id"
   end
 
+  create_table "users", force: :cascade do |t|
+    t.string "bluesky_did"
+    t.string "bluesky_handle"
+    t.string "display_name"
+    t.string "avatar_url"
+    t.boolean "is_admin"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.jsonb "profile_cache"
+    t.datetime "profile_updated_at"
+  end
+
+  add_foreign_key "chats", "users"
+  add_foreign_key "llm_providers", "users"
   add_foreign_key "messages", "chats"
 end
