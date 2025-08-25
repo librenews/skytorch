@@ -1,7 +1,9 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
 one:
-  title: MyString
+  title: Test Chat
+  user: one
 
 two:
-  title: MyString
+  title: Another Test Chat
+  user: one

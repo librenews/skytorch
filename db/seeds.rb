@@ -4,7 +4,7 @@
 
 # Create a sample chat for testing
 if Chat.count.zero?
-  chat = Chat.create!(title: "Welcome to Skytorch")
+  chat = Chat.create!(title: "Welcome to SkyTorch")
   
   # Add some initial messages
   chat.messages.create!([
@@ -17,7 +17,7 @@ end
 # Create a sample MCP server record
 if McpServer.count.zero?
   McpServer.create!(
-    name: "Skytorch MCP Server",
+    name: "SkyTorch MCP Server",
     url: "http://localhost:3000/mcp",
     description: "The main MCP server for this application"
   )

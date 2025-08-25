@@ -12,7 +12,7 @@ class McpController < ApplicationController
         jsonrpc: "2.0",
         id: request_data["id"],
         result: {
-          tools: SkytorchMcpServer.available_tools
+          tools: SkyTorchMcpServer.available_tools
         }
       }
       
@@ -20,7 +20,7 @@ class McpController < ApplicationController
       tool_name = request_data["params"]["name"]
       arguments = request_data["params"]["arguments"]
       
-      result = SkytorchMcpServer.call_tool(tool_name, arguments)
+              result = SkyTorchMcpServer.call_tool(tool_name, arguments)
       
       render json: {
         jsonrpc: "2.0",

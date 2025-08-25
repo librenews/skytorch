@@ -1,15 +1,61 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
 one:
-  bluesky_did: MyString
-  bluesky_handle: MyString
-  display_name: MyString
-  avatar_url: MyString
+  bluesky_did: did:plc:testuser123
+  bluesky_handle: test.user
+  display_name: Test User
+  avatar_url: https://example.com/avatar.jpg
   is_admin: false
+  profile_cache:
+    handle: test.user
+    display_name: Test User
+    avatar_url: https://example.com/avatar.jpg
+    description: Test user description
+    did: did:plc:testuser123
+    followers_count: 50
+    following_count: 25
+    posts_count: 10
+  profile_updated_at: <%= 30.minutes.ago %>
 
-two:
-  bluesky_did: MyString
-  bluesky_handle: MyString
-  display_name: MyString
-  avatar_url: MyString
+admin:
+  bluesky_did: did:plc:admin123
+  bluesky_handle: admin.user
+  display_name: Admin User
+  avatar_url: https://example.com/admin-avatar.jpg
+  is_admin: true
+  profile_cache:
+    handle: admin.user
+    display_name: Admin User
+    avatar_url: https://example.com/admin-avatar.jpg
+    description: Admin user description
+    did: did:plc:admin123
+    followers_count: 100
+    following_count: 50
+    posts_count: 20
+  profile_updated_at: <%= 1.hour.ago %>
+
+stale_cache:
+  bluesky_did: did:plc:stale123
+  bluesky_handle: stale.user
+  display_name: Stale User
+  avatar_url: https://example.com/stale-avatar.jpg
   is_admin: false
+  profile_cache:
+    handle: stale.user
+    display_name: Stale User
+    avatar_url: https://example.com/stale-avatar.jpg
+    description: Stale user description
+    did: did:plc:stale123
+    followers_count: 30
+    following_count: 15
+    posts_count: 5
+  profile_updated_at: <%= 2.hours.ago %>
+
+no_cache:
+  bluesky_did: did:plc:nocache123
+  bluesky_handle: nocache.user
+  display_name: No Cache User
+  avatar_url: https://example.com/nocache-avatar.jpg
+  is_admin: false
+  profile_cache: null
+  profile_updated_at: null

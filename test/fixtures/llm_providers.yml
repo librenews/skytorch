@@ -1,17 +1,19 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
 one:
-  name: MyString
-  provider_type: MyString
-  api_key: MyString
-  base_url: MyString
-  default_model: MyString
-  is_active: false
+  name: OpenAI
+  provider_type: openai
+  api_key: test_key_123
+  base_url: https://api.openai.com/v1
+  default_model: gpt-4
+  is_active: true
+  user: one
 
 two:
-  name: MyString
-  provider_type: MyString
-  api_key: MyString
-  base_url: MyString
-  default_model: MyString
-  is_active: false
+  name: Anthropic
+  provider_type: anthropic
+  api_key: test_key_456
+  base_url: https://api.anthropic.com
+  default_model: claude-3-sonnet
+  is_active: true
+  user: one

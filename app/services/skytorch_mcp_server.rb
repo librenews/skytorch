@@ -1,4 +1,4 @@
-class SkytorchMcpServer
+class SkyTorchMcpServer
   def self.available_tools
     [
       {

@@ -1,4 +1,4 @@
-# Skytorch
+# SkyTorch
 
 A Rails 8 application that integrates ruby_llm for chat functionality and ruby_llm-mcp for Model Context Protocol (MCP) integration. The application serves as both a chat client and an MCP server.
 
@@ -21,7 +21,7 @@ A Rails 8 application that integrates ruby_llm for chat functionality and ruby_l
 ### Services
 - `ChatService`: Handles chat interactions with LLM and MCP integration
 - `McpServerProvider`: Stub class for dynamically providing MCP servers
-- `SkytorchMcpServer`: MCP server implementation with test tools
+- `SkyTorchMcpServer`: MCP server implementation with test tools
 
 ### MCP Tools
 The built-in MCP server provides:

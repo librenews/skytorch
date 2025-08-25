@@ -1,7 +1,7 @@
 {
   "client_id": "https://dev.libre.news/oauth/client-metadata.json",
   "application_type": "web",
-  "client_name": "Skytorch",
+  "client_name": "SkyTorch",
   "client_uri": "https://dev.libre.news",
   "dpop_bound_access_tokens": true,
   "grant_types": [

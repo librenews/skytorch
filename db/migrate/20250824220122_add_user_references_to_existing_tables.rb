@@ -4,7 +4,7 @@ class AddUserReferencesToExistingTables < ActiveRecord::Migration[8.0]
     admin_user = User.create!(
       bluesky_did: 'did:plc:admin',
       bluesky_handle: 'admin.skytorch',
-      display_name: 'Skytorch Admin',
+      display_name: 'SkyTorch Admin',
       is_admin: true
     )
 
