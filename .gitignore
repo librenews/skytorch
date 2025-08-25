@@ -40,6 +40,7 @@
 *.pfx
 config/atproto_private_key.pem
 config/atproto_jwk.json
+config/atproto_*.backup_*
 
 /app/assets/builds/*
 !/app/assets/builds/.keep
