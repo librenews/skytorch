@@ -4,7 +4,6 @@ class ChatsController < ApplicationController
     @chats = current_user.chats.order(created_at: :desc)
     
     respond_to do |format|
-      format.html
       format.json { render json: @chats.map { |chat| { 
         id: chat.id, 
         title: chat.title, 
@@ -19,7 +18,6 @@ class ChatsController < ApplicationController
     @messages = @chat.messages.order(:created_at)
     
     respond_to do |format|
-      format.html
       format.json { render json: { 
         id: @chat.id, 
         title: @chat.title, 
@@ -37,12 +35,10 @@ class ChatsController < ApplicationController
     
     if @chat.save
       respond_to do |format|
-        format.html { redirect_to @chat, notice: 'Chat was successfully created.' }
         format.json { render json: @chat }
       end
     else
       respond_to do |format|
-        format.html { render :new, status: :unprocessable_entity }
         format.json { render json: { errors: @chat.errors }, status: :unprocessable_entity }
       end
     end
@@ -53,12 +49,10 @@ class ChatsController < ApplicationController
     
     if @chat.update(chat_params)
       respond_to do |format|
-        format.html { redirect_to @chat, notice: 'Chat was successfully updated.' }
         format.json { render json: @chat }
       end
     else
       respond_to do |format|
-        format.html { redirect_to @chat, alert: 'Failed to update chat.' }
         format.json { render json: { errors: @chat.errors }, status: :unprocessable_entity }
       end
     end
@@ -89,12 +83,10 @@ class ChatsController < ApplicationController
     
     if @chat.destroy
       respond_to do |format|
-        format.html { redirect_to chats_path, notice: 'Chat was successfully deleted.' }
         format.json { render json: { success: true } }
       end
     else
       respond_to do |format|
-        format.html { redirect_to @chat, alert: 'Failed to delete chat.' }
         format.json { render json: { errors: @chat.errors }, status: :unprocessable_entity }
       end
     end
