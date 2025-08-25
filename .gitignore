@@ -33,6 +33,14 @@
 # Ignore master key for decrypting credentials and more.
 /config/master.key
 
+# Ignore private keys and certificates
+*.pem
+*.key
+*.p12
+*.pfx
+config/atproto_private_key.pem
+config/atproto_jwk.json
+
 /app/assets/builds/*
 !/app/assets/builds/.keep
 
