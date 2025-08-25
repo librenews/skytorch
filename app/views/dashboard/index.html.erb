@@ -82,25 +82,6 @@
                             </div>
                           </div>
                         </button>
-                        
-                        <!-- Hover Menu -->
-                        <div class="absolute right-2 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button class="chat-menu-btn p-1 rounded hover:bg-gray-200 transition-colors" data-chat-id="<%= chat.id %>">
-                            <svg class="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
-                            </svg>
-                          </button>
-                          
-                          <!-- Dropdown Menu -->
-                          <div class="chat-menu-dropdown absolute right-0 top-full mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[120px] hidden z-10">
-                            <button class="delete-chat-btn w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center space-x-2" data-chat-id="<%= chat.id %>" data-chat-title="<%= chat.title %>">
-                              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                              </svg>
-                              <span>Delete</span>
-                            </button>
-                          </div>
-                        </div>
                       </div>
                     <% end %>
                   </div>
@@ -159,6 +140,8 @@
         </div>
       </div>
     </div>
+
+
 
     <!-- Messages Area -->
     <div id="messages-container" class="flex-1 overflow-y-auto p-6 space-y-4" data-dashboard-target="messagesContainer">

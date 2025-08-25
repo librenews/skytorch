@@ -5,6 +5,12 @@ class MessagesController < ApplicationController
     @message = @chat.messages.build(message_params.merge(role: 'user'))
     
     if @message.save
+      # Update chat title on first message
+      if @chat.messages.count == 1
+        title = @message.content.length > 100 ? @message.content[0..100] + '...' : @message.content
+        @chat.update(title: title)
+      end
+      
       # Use ChatService to process the message with LLM and MCP
       chat_service = ChatService.new(@chat)
       result = chat_service.send_message(@message.content)

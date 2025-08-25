@@ -6,6 +6,8 @@ export default class extends Controller {
   connect() {
     console.log("Dashboard controller connected!")
     this.currentChatId = null
+    this.currentChatTitle = null
+    this.chatToDelete = null
     this.setupEventListeners()
     this.setupAutoResize()
     this.startProviderMonitoring()
@@ -51,6 +53,35 @@ export default class extends Controller {
         console.log("Close settings clicked")
         this.closeSettings()
       }
+      
+      // Delete chat toolbar button clicks
+      if (e.target.closest('#delete-chat-toolbar-btn')) {
+        e.preventDefault()
+        console.log("Delete chat toolbar button clicked")
+        console.log("Current chat ID:", this.currentChatId)
+        console.log("Current chat title:", this.currentChatTitle)
+        this.showDeleteConfirmation(this.currentChatId, this.currentChatTitle)
+      }
+
+      // Cancel delete button clicks
+      if (e.target.closest('#cancel-delete')) {
+        e.preventDefault()
+        console.log("Cancel delete clicked")
+        this.hideDeleteConfirmation()
+      }
+
+      // Confirm delete button clicks
+      if (e.target.closest('#confirm-delete')) {
+        e.preventDefault()
+        console.log("Confirm delete clicked")
+        this.deleteChat()
+      }
+
+      // Close delete modal on backdrop click
+      const deleteModal = document.getElementById('delete-chat-modal')
+      if (deleteModal && e.target === deleteModal) {
+        this.hideDeleteConfirmation()
+      }
     })
     
     // Send button
@@ -72,31 +103,26 @@ export default class extends Controller {
       })
     }
     
-          // Close modal on backdrop click
-      if (this.hasSettingsModalTarget) {
-        this.settingsModalTarget.addEventListener('click', (e) => {
-          if (e.target === this.settingsModalTarget) {
-            this.closeSettings()
-          }
-        })
-      }
-
-      // Chat menu button clicks
-      if (e.target.closest('.chat-menu-btn')) {
+    // Close modal on backdrop click
+    if (this.hasSettingsModalTarget) {
+      this.settingsModalTarget.addEventListener('click', (e) => {
+        if (e.target === this.settingsModalTarget) {
+          this.closeSettings()
+        }
+      })
+    }
+    
+    // Direct event listener for delete toolbar button
+    const deleteToolbarBtn = document.getElementById('delete-chat-toolbar-btn')
+    if (deleteToolbarBtn) {
+      deleteToolbarBtn.addEventListener('click', (e) => {
         e.preventDefault()
-        e.stopPropagation()
-        const menuBtn = e.target.closest('.chat-menu-btn')
-        const chatId = menuBtn.dataset.chatId
-        console.log("Chat menu button clicked:", chatId)
-        this.toggleChatMenu(chatId)
-      }
-
-      // Delete chat button clicks
-      if (e.target.closest('.delete-chat-btn')) {
-        e.preventDefault()
-        e.stopPropagation()
-        const deleteBtn = e.target.closest('.delete-chat-btn')
-        const chatId = deleteBtn.dataset.chatId
+        console.log("Delete toolbar button clicked (direct listener)")
+        console.log("Current chat ID:", this.currentChatId)
+        console.log("Current chat title:", this.currentChatTitle)
+        this.showDeleteConfirmation(this.currentChatId, this.currentChatTitle)
+      })
+    }
         const chatTitle = deleteBtn.dataset.chatTitle
         console.log("Delete chat button clicked:", chatId, chatTitle)
         this.showDeleteConfirmation(chatId, chatTitle)
@@ -229,6 +255,7 @@ export default class extends Controller {
       if (response.ok) {
         const chat = await response.json()
         this.currentChatId = chatId
+        this.currentChatTitle = chat.title
         this.displayChat(chat)
         this.showMessageInput()
         
@@ -240,6 +267,8 @@ export default class extends Controller {
         if (selectedItem) {
           selectedItem.classList.add('active')
         }
+        
+
       }
     } catch (error) {
       console.error('Error loading chat:', error)
@@ -297,10 +326,28 @@ export default class extends Controller {
   }
   
   async sendMessage() {
+    console.log("=== NEW sendMessage method called ===")
     const content = this.messageInputTarget.value.trim()
-    if (!content || !this.currentChatId) return
+    console.log("Content:", content)
+    console.log("Current chat ID:", this.currentChatId)
+    console.log("Content is empty:", !content)
+    console.log("Current chat ID is null:", !this.currentChatId)
+    if (!content || !this.currentChatId) {
+      console.log("Returning early from sendMessage")
+      return
+    }
+    
+    console.log("Continuing with sendMessage...")
     
     console.log("Sending message:", content)
+    
+    // Update title on first message
+    const messageElements = this.messagesContainerTarget.querySelectorAll('.flex.space-x-4.mb-4')
+    if (messageElements.length === 0) {
+      console.log("First message detected, updating title")
+      const title = content.length > 100 ? content.substring(0, 100) + '...' : content
+      await this.updateChatTitle(title)
+    }
     
     // Add user message immediately
     const userMessage = {
@@ -308,6 +355,17 @@ export default class extends Controller {
       content: content
     }
     this.addMessage(userMessage)
+    
+    // Check if this is the first message and update title
+    const messageElements = this.messagesContainerTarget.querySelectorAll('.flex.space-x-4.mb-4')
+    const isFirstMessage = messageElements.length === 1 // Just the user message we just added
+    console.log("Is first message:", isFirstMessage)
+    
+    if (isFirstMessage) {
+      const title = content.length > 100 ? content.substring(0, 100) + '...' : content
+      console.log("Updating title to:", title)
+      await this.updateChatTitle(title)
+    }
     
     // Clear input and reset height
     this.messageInputTarget.value = ''
@@ -339,6 +397,11 @@ export default class extends Controller {
           
           this.addMessage(result.assistant_message)
           this.scrollToBottom()
+          
+          // If this was the first AI response, generate a better title
+          if (isFirstMessage) {
+            await this.generateAITitle(content, result.assistant_message.content)
+          }
           
           // Update the chat list to reflect the new message count
           await this.updateChatList()
@@ -434,25 +497,6 @@ export default class extends Controller {
                   </div>
                 </div>
               </button>
-              
-              <!-- Hover Menu -->
-              <div class="absolute right-2 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button class="chat-menu-btn p-1 rounded hover:bg-gray-200 transition-colors" data-chat-id="${chat.id}">
-                  <svg class="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
-                  </svg>
-                </button>
-                
-                <!-- Dropdown Menu -->
-                <div class="chat-menu-dropdown absolute right-0 top-full mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[120px] hidden z-10">
-                  <button class="delete-chat-btn w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center space-x-2" data-chat-id="${chat.id}" data-chat-title="${chat.title}">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                    </svg>
-                    <span>Delete</span>
-                  </button>
-                </div>
-              </div>
             </div>
           `).join('')
           
@@ -768,21 +812,7 @@ Reset: ${usage.reset_requests}`
     }
   }
 
-  // Chat menu and delete functionality
-  toggleChatMenu(chatId) {
-    // Close all other menus first
-    document.querySelectorAll('.chat-menu-dropdown').forEach(dropdown => {
-      dropdown.classList.add('hidden')
-    })
-    
-    // Toggle the clicked menu
-    const menuBtn = document.querySelector(`[data-chat-id="${chatId}"] .chat-menu-btn`)
-    const dropdown = menuBtn?.nextElementSibling
-    
-    if (dropdown) {
-      dropdown.classList.toggle('hidden')
-    }
-  }
+
 
   showDeleteConfirmation(chatId, chatTitle) {
     this.chatToDelete = { id: chatId, title: chatTitle }
@@ -832,10 +862,13 @@ Reset: ${usage.reset_requests}`
         // If this was the currently loaded chat, clear the chat area
         if (this.currentChatId === chatId) {
           this.currentChatId = null
+          this.currentChatTitle = null
           this.chatTitleTarget.textContent = 'Welcome to SkyTorch'
           this.chatSubtitleTarget.textContent = 'Start a new conversation or select an existing chat'
           this.messagesContainerTarget.innerHTML = this.getWelcomeMessage()
           this.hideMessageInput()
+          
+
         }
         
         // Hide the confirmation modal
@@ -850,6 +883,66 @@ Reset: ${usage.reset_requests}`
     } catch (error) {
       console.error('Error deleting chat:', error)
       alert('Error deleting chat. Please try again.')
+    }
+  }
+
+  async updateChatTitle(title) {
+    try {
+      const response = await fetch(`/chats/${this.currentChatId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+        },
+        body: JSON.stringify({
+          chat: { title: title }
+        })
+      })
+      
+      if (response.ok) {
+        console.log("Chat title updated to:", title)
+        // Update the displayed title
+        this.chatTitleTarget.textContent = title
+        this.currentChatTitle = title
+        
+        // Update the title in the left navigation
+        const chatItem = document.querySelector(`[data-chat-id="${this.currentChatId}"]`)
+        if (chatItem) {
+          const titleElement = chatItem.querySelector('.text-sm.font-medium.text-gray-900')
+          if (titleElement) {
+            titleElement.textContent = title
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error updating chat title:', error)
+    }
+  }
+
+  async generateAITitle(userMessage, aiResponse) {
+    try {
+      const response = await fetch(`/chats/${this.currentChatId}/generate_title`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+        },
+        body: JSON.stringify({
+          user_message: userMessage,
+          ai_response: aiResponse
+        })
+      })
+      
+      if (response.ok) {
+        const result = await response.json()
+        if (result.title) {
+          await this.updateChatTitle(result.title)
+        }
+      }
+    } catch (error) {
+      console.error('Error generating AI title:', error)
     }
   }
 

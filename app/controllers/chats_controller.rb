@@ -48,6 +48,42 @@ class ChatsController < ApplicationController
     end
   end
 
+  def update
+    @chat = current_user.chats.find(params[:id])
+    
+    if @chat.update(chat_params)
+      respond_to do |format|
+        format.html { redirect_to @chat, notice: 'Chat was successfully updated.' }
+        format.json { render json: @chat }
+      end
+    else
+      respond_to do |format|
+        format.html { redirect_to @chat, alert: 'Failed to update chat.' }
+        format.json { render json: { errors: @chat.errors }, status: :unprocessable_entity }
+      end
+    end
+  end
+
+  def generate_title
+    @chat = current_user.chats.find(params[:id])
+    user_message = params[:user_message]
+    ai_response = params[:ai_response]
+    
+    # Create a simple title based on the user's message
+    # In a more sophisticated implementation, you could use AI to generate a better title
+    title = user_message.length > 50 ? user_message[0..50] + '...' : user_message
+    
+    if @chat.update(title: title)
+      respond_to do |format|
+        format.json { render json: { title: title } }
+      end
+    else
+      respond_to do |format|
+        format.json { render json: { errors: @chat.errors }, status: :unprocessable_entity }
+      end
+    end
+  end
+
   def destroy
     @chat = current_user.chats.find(params[:id])
     

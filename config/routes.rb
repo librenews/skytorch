@@ -18,8 +18,9 @@ Rails.application.routes.draw do
   get "llm_providers/update"
   get "llm_providers/destroy"
   # Chat routes
-  resources :chats, only: [:index, :show, :new, :create, :destroy] do
+  resources :chats, only: [:index, :show, :new, :create, :update, :destroy] do
     resources :messages, only: [:create]
+    post :generate_title, on: :member
   end
   
   # LLM Provider routes
