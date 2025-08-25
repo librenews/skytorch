@@ -22,9 +22,6 @@
                     <p class="text-sm font-medium text-gray-900">Active Provider</p>
                     <p class="text-lg font-semibold text-gray-900">
                       <%= @current_provider&.name || "None" %>
-                      <% if @current_provider&.global? %>
-                        <span class="text-xs text-gray-500">(Global)</span>
-                      <% end %>
                     </p>
                     <div id="provider-usage" class="mt-2 space-y-1">
                       <% if @connection_status[:usage] && !current_user.using_global_provider? %>
@@ -36,8 +33,6 @@
                           <span class="text-gray-600">Tokens:</span>
                           <span class="font-medium" id="tokens-usage"><%= @connection_status[:usage][:tokens][:used] %>/<%= @connection_status[:usage][:tokens][:limit] %></span>
                         </div>
-                      <% elsif current_user.using_global_provider? %>
-                        <div class="text-xs text-gray-500">Using global provider</div>
                       <% end %>
                     </div>
                   </div>
