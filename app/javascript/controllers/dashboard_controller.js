@@ -111,48 +111,6 @@ export default class extends Controller {
         }
       })
     }
-    
-    // Direct event listener for delete toolbar button
-    const deleteToolbarBtn = document.getElementById('delete-chat-toolbar-btn')
-    if (deleteToolbarBtn) {
-      deleteToolbarBtn.addEventListener('click', (e) => {
-        e.preventDefault()
-        console.log("Delete toolbar button clicked (direct listener)")
-        console.log("Current chat ID:", this.currentChatId)
-        console.log("Current chat title:", this.currentChatTitle)
-        this.showDeleteConfirmation(this.currentChatId, this.currentChatTitle)
-      })
-    }
-        const chatTitle = deleteBtn.dataset.chatTitle
-        console.log("Delete chat button clicked:", chatId, chatTitle)
-        this.showDeleteConfirmation(chatId, chatTitle)
-      }
-
-      // Delete confirmation modal buttons
-      if (e.target.closest('#cancel-delete')) {
-        e.preventDefault()
-        console.log("Cancel delete clicked")
-        this.hideDeleteConfirmation()
-      }
-
-      if (e.target.closest('#confirm-delete')) {
-        e.preventDefault()
-        console.log("Confirm delete clicked")
-        this.deleteChat()
-      }
-
-      // Close delete modal on backdrop click
-      const deleteModal = document.getElementById('delete-chat-modal')
-      if (deleteModal && e.target === deleteModal) {
-        this.hideDeleteConfirmation()
-      }
-
-      // Close chat menus when clicking outside
-      if (!e.target.closest('.chat-menu-btn') && !e.target.closest('.chat-menu-dropdown')) {
-        document.querySelectorAll('.chat-menu-dropdown').forEach(dropdown => {
-          dropdown.classList.add('hidden')
-        })
-      }
   }
   
   setupAutoResize() {
