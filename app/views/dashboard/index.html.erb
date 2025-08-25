@@ -68,19 +68,40 @@
                 <div id="chat-list-container" class="max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 force-scrollbar always-show-scrollbar" style="min-height: 200px;">
                   <div id="chat-list" class="space-y-1" style="padding-bottom: 20px;">
                     <% @chats.each do |chat| %>
-                      <button class="chat-item w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors" data-chat-id="<%= chat.id %>">
-                        <div class="flex items-center space-x-3">
-                          <div class="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center">
-                            <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-                            </svg>
+                      <div class="chat-item-container group relative" data-chat-id="<%= chat.id %>">
+                        <button class="chat-item w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors" data-chat-id="<%= chat.id %>">
+                          <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center">
+                              <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                              </svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                              <p class="text-sm font-medium text-gray-900 truncate"><%= chat.title %></p>
+                              <p class="text-xs text-gray-500"><%= pluralize(chat.messages.count, 'message') %></p>
+                            </div>
                           </div>
-                          <div class="flex-1 min-w-0">
-                            <p class="text-sm font-medium text-gray-900 truncate"><%= chat.title %></p>
-                            <p class="text-xs text-gray-500"><%= pluralize(chat.messages.count, 'message') %></p>
+                        </button>
+                        
+                        <!-- Hover Menu -->
+                        <div class="absolute right-2 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button class="chat-menu-btn p-1 rounded hover:bg-gray-200 transition-colors" data-chat-id="<%= chat.id %>">
+                            <svg class="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+                            </svg>
+                          </button>
+                          
+                          <!-- Dropdown Menu -->
+                          <div class="chat-menu-dropdown absolute right-0 top-full mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[120px] hidden z-10">
+                            <button class="delete-chat-btn w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center space-x-2" data-chat-id="<%= chat.id %>" data-chat-title="<%= chat.title %>">
+                              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                              </svg>
+                              <span>Delete</span>
+                            </button>
                           </div>
                         </div>
-                      </button>
+                      </div>
                     <% end %>
                   </div>
                   <div id="chat-loading" class="hidden py-2 px-3">
@@ -173,6 +194,38 @@
               </button>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Chat Confirmation Modal -->
+<div id="delete-chat-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+  <div class="flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+      <div class="p-6">
+        <div class="flex items-center space-x-3 mb-4">
+          <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+            <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900">Delete Chat?</h3>
+            <p class="text-sm text-gray-500">This action cannot be undone.</p>
+          </div>
+        </div>
+        <p class="text-gray-700 mb-6">
+          This will delete <span id="delete-chat-name" class="font-medium"></span> and all its messages.
+        </p>
+        <div class="flex justify-end space-x-3">
+          <button id="cancel-delete" class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors">
+            Cancel
+          </button>
+          <button id="confirm-delete" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors">
+            Delete
+          </button>
         </div>
       </div>
     </div>

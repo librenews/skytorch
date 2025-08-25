@@ -14,13 +14,7 @@ class SessionsController < ApplicationController
       # Find or create user based on Bluesky DID
       user = User.find_or_initialize_by(bluesky_did: auth.info.did)
       
-      # Update user information from OAuth response
-      # For AT Protocol, we use the DID as the identifier
-      user.bluesky_handle = auth.info.did
-      user.display_name = auth.info.did.split(':').last || auth.info.did
-      user.avatar_url = nil # AT Protocol doesn't provide avatar in OAuth response
-      
-      # Try to fetch profile information using AT Protocol service
+      # Try to fetch profile information using AT Protocol service first
       begin
         at_service = AtProtocolService.new
         profile_data = at_service.get_profile(auth.info.did)
@@ -28,9 +22,18 @@ class SessionsController < ApplicationController
         if profile_data && profile_data[:handle]
           # Update the user's profile cache with fresh data
           user.update_profile_cache!(profile_data)
+        else
+          # Fallback to basic info if profile fetch fails
+          user.bluesky_handle = auth.info.did
+          user.display_name = auth.info.did.split(':').last || auth.info.did
+          user.avatar_url = nil
         end
       rescue => e
         Rails.logger.warn "Failed to fetch AT Protocol profile: #{e.message}"
+        # Fallback to basic info if profile fetch fails
+        user.bluesky_handle = auth.info.did
+        user.display_name = auth.info.did.split(':').last || auth.info.did
+        user.avatar_url = nil
       end
       
       Rails.logger.info "User before save: #{user.attributes.inspect}"

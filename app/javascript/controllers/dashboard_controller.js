@@ -72,14 +72,61 @@ export default class extends Controller {
       })
     }
     
-    // Close modal on backdrop click
-    if (this.hasSettingsModalTarget) {
-      this.settingsModalTarget.addEventListener('click', (e) => {
-        if (e.target === this.settingsModalTarget) {
-          this.closeSettings()
-        }
-      })
-    }
+          // Close modal on backdrop click
+      if (this.hasSettingsModalTarget) {
+        this.settingsModalTarget.addEventListener('click', (e) => {
+          if (e.target === this.settingsModalTarget) {
+            this.closeSettings()
+          }
+        })
+      }
+
+      // Chat menu button clicks
+      if (e.target.closest('.chat-menu-btn')) {
+        e.preventDefault()
+        e.stopPropagation()
+        const menuBtn = e.target.closest('.chat-menu-btn')
+        const chatId = menuBtn.dataset.chatId
+        console.log("Chat menu button clicked:", chatId)
+        this.toggleChatMenu(chatId)
+      }
+
+      // Delete chat button clicks
+      if (e.target.closest('.delete-chat-btn')) {
+        e.preventDefault()
+        e.stopPropagation()
+        const deleteBtn = e.target.closest('.delete-chat-btn')
+        const chatId = deleteBtn.dataset.chatId
+        const chatTitle = deleteBtn.dataset.chatTitle
+        console.log("Delete chat button clicked:", chatId, chatTitle)
+        this.showDeleteConfirmation(chatId, chatTitle)
+      }
+
+      // Delete confirmation modal buttons
+      if (e.target.closest('#cancel-delete')) {
+        e.preventDefault()
+        console.log("Cancel delete clicked")
+        this.hideDeleteConfirmation()
+      }
+
+      if (e.target.closest('#confirm-delete')) {
+        e.preventDefault()
+        console.log("Confirm delete clicked")
+        this.deleteChat()
+      }
+
+      // Close delete modal on backdrop click
+      const deleteModal = document.getElementById('delete-chat-modal')
+      if (deleteModal && e.target === deleteModal) {
+        this.hideDeleteConfirmation()
+      }
+
+      // Close chat menus when clicking outside
+      if (!e.target.closest('.chat-menu-btn') && !e.target.closest('.chat-menu-dropdown')) {
+        document.querySelectorAll('.chat-menu-dropdown').forEach(dropdown => {
+          dropdown.classList.add('hidden')
+        })
+      }
   }
   
   setupAutoResize() {
@@ -373,19 +420,40 @@ export default class extends Controller {
           // Only update the first 8 chats (initial load)
           const initialChats = chats.slice(0, 8)
           chatList.innerHTML = initialChats.map(chat => `
-            <button class="chat-item w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors" data-chat-id="${chat.id}">
-              <div class="flex items-center space-x-3">
-                <div class="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center">
-                  <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-                  </svg>
+            <div class="chat-item-container group relative" data-chat-id="${chat.id}">
+              <button class="chat-item w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors" data-chat-id="${chat.id}">
+                <div class="flex items-center space-x-3">
+                  <div class="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center">
+                    <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                    </svg>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-gray-900 truncate">${chat.title}</p>
+                    <p class="text-xs text-gray-500">${chat.message_count} message${chat.message_count !== 1 ? 's' : ''}</p>
+                  </div>
                 </div>
-                <div class="flex-1 min-w-0">
-                  <p class="text-sm font-medium text-gray-900 truncate">${chat.title}</p>
-                  <p class="text-xs text-gray-500">${chat.message_count} message${chat.message_count !== 1 ? 's' : ''}</p>
+              </button>
+              
+              <!-- Hover Menu -->
+              <div class="absolute right-2 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button class="chat-menu-btn p-1 rounded hover:bg-gray-200 transition-colors" data-chat-id="${chat.id}">
+                  <svg class="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+                  </svg>
+                </button>
+                
+                <!-- Dropdown Menu -->
+                <div class="chat-menu-dropdown absolute right-0 top-full mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[120px] hidden z-10">
+                  <button class="delete-chat-btn w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center space-x-2" data-chat-id="${chat.id}" data-chat-title="${chat.title}">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                    <span>Delete</span>
+                  </button>
                 </div>
               </div>
-            </button>
+            </div>
           `).join('')
           
           // Reset infinite scroll state
@@ -626,20 +694,40 @@ Reset: ${usage.reset_requests}`
     if (!chatList) return
     
     chats.forEach(chat => {
-      const chatElement = document.createElement('button')
-      chatElement.className = 'chat-item w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors'
+      const chatElement = document.createElement('div')
+      chatElement.className = 'chat-item-container group relative'
       chatElement.dataset.chatId = chat.id
-      
       chatElement.innerHTML = `
-        <div class="flex items-center space-x-3">
-          <div class="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center">
-            <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-            </svg>
+        <button class="chat-item w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors" data-chat-id="${chat.id}">
+          <div class="flex items-center space-x-3">
+            <div class="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center">
+              <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+              </svg>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-gray-900 truncate">${chat.title}</p>
+              <p class="text-xs text-gray-500">${chat.message_count} message${chat.message_count !== 1 ? 's' : ''}</p>
+            </div>
           </div>
-          <div class="flex-1 min-w-0">
-            <p class="text-sm font-medium text-gray-900 truncate">${chat.title}</p>
-            <p class="text-xs text-gray-500">${chat.message_count} message${chat.message_count !== 1 ? 's' : ''}</p>
+        </button>
+        
+        <!-- Hover Menu -->
+        <div class="absolute right-2 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button class="chat-menu-btn p-1 rounded hover:bg-gray-200 transition-colors" data-chat-id="${chat.id}">
+            <svg class="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+            </svg>
+          </button>
+          
+          <!-- Dropdown Menu -->
+          <div class="chat-menu-dropdown absolute right-0 top-full mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[120px] hidden z-10">
+            <button class="delete-chat-btn w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center space-x-2" data-chat-id="${chat.id}" data-chat-title="${chat.title}">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+              </svg>
+              <span>Delete</span>
+            </button>
           </div>
         </div>
       `
@@ -678,5 +766,105 @@ Reset: ${usage.reset_requests}`
     if (end) {
       end.classList.add('hidden')
     }
+  }
+
+  // Chat menu and delete functionality
+  toggleChatMenu(chatId) {
+    // Close all other menus first
+    document.querySelectorAll('.chat-menu-dropdown').forEach(dropdown => {
+      dropdown.classList.add('hidden')
+    })
+    
+    // Toggle the clicked menu
+    const menuBtn = document.querySelector(`[data-chat-id="${chatId}"] .chat-menu-btn`)
+    const dropdown = menuBtn?.nextElementSibling
+    
+    if (dropdown) {
+      dropdown.classList.toggle('hidden')
+    }
+  }
+
+  showDeleteConfirmation(chatId, chatTitle) {
+    this.chatToDelete = { id: chatId, title: chatTitle }
+    
+    const modal = document.getElementById('delete-chat-modal')
+    const chatNameSpan = document.getElementById('delete-chat-name')
+    
+    if (modal && chatNameSpan) {
+      chatNameSpan.textContent = chatTitle
+      modal.classList.remove('hidden')
+    }
+  }
+
+  hideDeleteConfirmation() {
+    this.chatToDelete = null
+    
+    const modal = document.getElementById('delete-chat-modal')
+    if (modal) {
+      modal.classList.add('hidden')
+    }
+  }
+
+  async deleteChat() {
+    if (!this.chatToDelete) return
+    
+    const { id: chatId, title: chatTitle } = this.chatToDelete
+    
+    try {
+      const response = await fetch(`/chats/${chatId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+        }
+      })
+      
+      if (response.ok) {
+        console.log("Chat deleted successfully:", chatTitle)
+        
+        // Remove the chat from the UI
+        const chatElement = document.querySelector(`[data-chat-id="${chatId}"]`)
+        if (chatElement) {
+          chatElement.remove()
+        }
+        
+        // If this was the currently loaded chat, clear the chat area
+        if (this.currentChatId === chatId) {
+          this.currentChatId = null
+          this.chatTitleTarget.textContent = 'Welcome to SkyTorch'
+          this.chatSubtitleTarget.textContent = 'Start a new conversation or select an existing chat'
+          this.messagesContainerTarget.innerHTML = this.getWelcomeMessage()
+          this.hideMessageInput()
+        }
+        
+        // Hide the confirmation modal
+        this.hideDeleteConfirmation()
+        
+        // Update the chat list to reflect the deletion
+        await this.updateChatList()
+      } else {
+        console.error('Failed to delete chat:', response.statusText)
+        alert('Failed to delete chat. Please try again.')
+      }
+    } catch (error) {
+      console.error('Error deleting chat:', error)
+      alert('Error deleting chat. Please try again.')
+    }
+  }
+
+  getWelcomeMessage() {
+    return `
+      <div class="text-center py-12">
+        <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+          <span class="text-3xl">🚀</span>
+        </div>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">Welcome to SkyTorch</h3>
+        <p class="text-gray-500 mb-6">Social AI tools with MCP integration</p>
+        <button id="start-chat-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+          Start New Chat
+        </button>
+      </div>
+    `
   }
 }

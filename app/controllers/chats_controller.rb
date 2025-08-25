@@ -47,6 +47,22 @@ class ChatsController < ApplicationController
       end
     end
   end
+
+  def destroy
+    @chat = current_user.chats.find(params[:id])
+    
+    if @chat.destroy
+      respond_to do |format|
+        format.html { redirect_to chats_path, notice: 'Chat was successfully deleted.' }
+        format.json { render json: { success: true } }
+      end
+    else
+      respond_to do |format|
+        format.html { redirect_to @chat, alert: 'Failed to delete chat.' }
+        format.json { render json: { errors: @chat.errors }, status: :unprocessable_entity }
+      end
+    end
+  end
   
   private
   

@@ -6,7 +6,15 @@ class AtProtocolService
       'pass' => Rails.application.credentials.bluesky_app_password
     }
     
-    @client = Minisky.new('bsky.social', config)
+    # Create a temporary config file for minisky
+    config_file = Tempfile.new(['minisky_config', '.yml'])
+    config_file.write(config.to_yaml)
+    config_file.close
+    
+    @client = Minisky.new('bsky.social', config_file.path)
+    
+    # Clean up the temporary file when the object is garbage collected
+    ObjectSpace.define_finalizer(self, proc { File.delete(config_file.path) if File.exist?(config_file.path) })
   end
 
   # Get profile information for a user

@@ -25,4 +25,54 @@ class User < ApplicationRecord
   def avatar_display_url
     avatar_url.presence || "https://ui-avatars.com/api/?name=#{display_name}&background=6366f1&color=fff"
   end
+
+  # Profile caching methods
+  def update_profile_cache!(profile_data)
+    return unless profile_data
+    
+    self.bluesky_handle = profile_data[:handle] if profile_data[:handle]
+    self.display_name = profile_data[:display_name] if profile_data[:display_name]
+    self.avatar_url = profile_data[:avatar_url] if profile_data[:avatar_url]
+    self.profile_cache = profile_data
+    self.profile_updated_at = Time.current
+    save!
+  end
+
+  def cached_profile_data
+    profile_cache || {}
+  end
+
+  def profile_cache_stale?
+    profile_updated_at.nil? || profile_updated_at < 1.hour.ago
+  end
+
+  def description
+    cached_profile_data['description'] || cached_profile_data[:description]
+  end
+
+  def followers_count
+    cached_profile_data['followers_count'] || cached_profile_data[:followers_count] || 0
+  end
+
+  def following_count
+    cached_profile_data['following_count'] || cached_profile_data[:following_count] || 0
+  end
+
+  def posts_count
+    cached_profile_data['posts_count'] || cached_profile_data[:posts_count] || 0
+  end
+
+  def refresh_profile_cache!
+    at_service = AtProtocolService.new
+    profile_data = at_service.get_profile(bluesky_handle || bluesky_did)
+    if profile_data
+      update_profile_cache!(profile_data)
+      true
+    else
+      false
+    end
+  rescue => e
+    Rails.logger.warn "Failed to refresh profile cache for user #{id}: #{e.message}"
+    false
+  end
 end
