@@ -13,6 +13,9 @@ export default class extends Controller {
     this.startProviderMonitoring()
     this.setupInfiniteScroll()
     
+    // Debug: Monitor when chat actions container gets hidden
+    this.monitorChatActionsContainer()
+    
     // Debug: Check if modal elements exist
     console.log("Modal elements check:")
     console.log("chat-action-modal:", document.getElementById('chat-action-modal'))
@@ -99,22 +102,49 @@ export default class extends Controller {
         this.toggleUserProfileMenu()
       }
 
+      // Mobile back button clicks
+      if (e.target.closest('#mobile-back-btn')) {
+        e.preventDefault()
+        console.log("Mobile back button clicked")
+        this.returnToDashboard()
+      }
+
       // Close user profile menu when clicking outside
       const userProfileMenu = document.getElementById('user-profile-menu')
       if (userProfileMenu && !e.target.closest('#user-profile-btn') && !e.target.closest('#user-profile-menu')) {
         this.hideUserProfileMenu()
       }
 
-      // Chat actions button clicks
-      if (e.target.closest('#chat-actions-btn')) {
+      // Desktop chat actions button clicks
+      if (e.target.closest('#desktop-chat-actions-btn')) {
         e.preventDefault()
-        this.toggleChatActionsMenu()
+        e.stopPropagation()
+        console.log("🎯 Desktop chat actions button clicked!")
+        this.toggleDesktopChatActionsMenu()
       }
 
-      // Close chat actions menu when clicking outside
-      const chatActionsMenu = document.getElementById('chat-actions-menu')
-      if (chatActionsMenu && !e.target.closest('#chat-actions-btn') && !e.target.closest('#chat-actions-menu')) {
-        this.hideChatActionsMenu()
+      // Mobile chat actions button clicks
+      if (e.target.closest('#mobile-chat-actions-btn')) {
+        e.preventDefault()
+        e.stopPropagation()
+        console.log("🎯 Mobile chat actions button clicked!")
+        this.toggleMobileChatActionsMenu()
+      }
+
+      // Close chat actions menus when clicking outside (with delay to prevent immediate hiding)
+      const desktopChatActionsMenu = document.getElementById('desktop-chat-actions-menu')
+      const mobileChatActionsMenu = document.getElementById('mobile-chat-actions-menu')
+      
+      if (desktopChatActionsMenu && !e.target.closest('#desktop-chat-actions-btn') && !e.target.closest('#desktop-chat-actions-menu')) {
+        setTimeout(() => {
+          this.hideDesktopChatActionsMenu()
+        }, 100)
+      }
+      
+      if (mobileChatActionsMenu && !e.target.closest('#mobile-chat-actions-btn') && !e.target.closest('#mobile-chat-actions-menu')) {
+        setTimeout(() => {
+          this.hideMobileChatActionsMenu()
+        }, 100)
       }
 
       // Chat action buttons
@@ -182,7 +212,8 @@ export default class extends Controller {
       if (e.key === 'Escape') {
         this.hideChatActionModal()
         this.hideUserProfileMenu()
-        this.hideChatActionsMenu()
+        this.hideDesktopChatActionsMenu()
+        this.hideMobileChatActionsMenu()
       }
     })
 
@@ -323,7 +354,10 @@ export default class extends Controller {
         this.currentChatTitle = chat.title
         this.displayChat(chat)
         this.showMessageInput()
-        this.showChatActionsContainer()
+        // Show chat actions after displayChat to ensure proper state
+        setTimeout(() => {
+          this.showChatActionsContainer()
+        }, 0)
         
         // Highlight selected chat in sidebar
         document.querySelectorAll('.chat-item').forEach(item => {
@@ -349,6 +383,9 @@ export default class extends Controller {
     this.chatTitleTarget.textContent = chat.title
     this.chatSubtitleTarget.textContent = `${chat.messages.length} messages`
     
+    // Show mobile chat header
+    this.showMobileChatHeader(chat.title, `${chat.messages.length} messages`)
+    
     // Clear and populate messages
     this.messagesContainerTarget.innerHTML = ''
     
@@ -361,6 +398,14 @@ export default class extends Controller {
     }
     
     this.scrollToBottom()
+    
+    // Debug: Check if chat actions container is visible
+    const desktopContainer = document.getElementById('chat-actions-container')
+    console.log("Desktop chat actions container after displayChat:", desktopContainer)
+    if (desktopContainer) {
+      console.log("Desktop container classes:", desktopContainer.className)
+      console.log("Desktop container hidden:", desktopContainer.classList.contains('hidden'))
+    }
   }
   
   showWelcomeMessage() {
@@ -535,28 +580,89 @@ export default class extends Controller {
     }
   }
 
-  toggleChatActionsMenu() {
-    const menu = document.getElementById('chat-actions-menu')
+  toggleDesktopChatActionsMenu() {
+    console.log("🔄 Toggle desktop chat actions menu called")
+    const menu = document.getElementById('desktop-chat-actions-menu')
+    console.log("🔍 Desktop menu element found:", menu)
     if (menu) {
-      if (menu.classList.contains('hidden')) {
-        this.showChatActionsMenu()
+      const isHidden = menu.classList.contains('hidden')
+      console.log("🔍 Desktop menu is hidden:", isHidden)
+      if (isHidden) {
+        console.log("📤 Showing desktop chat actions menu")
+        this.showDesktopChatActionsMenu()
       } else {
-        this.hideChatActionsMenu()
+        console.log("📥 Hiding desktop chat actions menu")
+        this.hideDesktopChatActionsMenu()
       }
+    } else {
+      console.log("❌ Desktop menu element not found!")
     }
   }
 
-  showChatActionsMenu() {
-    const menu = document.getElementById('chat-actions-menu')
+  toggleMobileChatActionsMenu() {
+    console.log("🔄 Toggle mobile chat actions menu called")
+    const menu = document.getElementById('mobile-chat-actions-menu')
+    console.log("🔍 Mobile menu element found:", menu)
     if (menu) {
-      menu.classList.remove('hidden')
+      const isHidden = menu.classList.contains('hidden')
+      console.log("🔍 Mobile menu is hidden:", isHidden)
+      if (isHidden) {
+        console.log("📤 Showing mobile chat actions menu")
+        this.showMobileChatActionsMenu()
+      } else {
+        console.log("📥 Hiding mobile chat actions menu")
+        this.hideMobileChatActionsMenu()
+      }
+    } else {
+      console.log("❌ Mobile menu element not found!")
     }
   }
 
-  hideChatActionsMenu() {
-    const menu = document.getElementById('chat-actions-menu')
+  showDesktopChatActionsMenu() {
+    const menu = document.getElementById('desktop-chat-actions-menu')
+    const button = document.getElementById('desktop-chat-actions-btn')
+    if (menu && button) {
+      menu.classList.remove('hidden')
+      menu.style.display = 'block'
+      console.log("📤 Desktop menu shown, checking positioning...")
+      console.log("📤 Desktop menu classes:", menu.className)
+      console.log("📤 Desktop menu computed styles:", window.getComputedStyle(menu))
+      console.log("📤 Desktop menu position:", menu.getBoundingClientRect())
+      console.log("📤 Desktop menu parent:", menu.parentElement)
+      console.log("📤 Desktop button position:", button.getBoundingClientRect())
+      console.log("📤 Desktop button parent:", button.parentElement)
+    }
+  }
+
+  showMobileChatActionsMenu() {
+    const menu = document.getElementById('mobile-chat-actions-menu')
+    const button = document.getElementById('mobile-chat-actions-btn')
+    if (menu && button) {
+      menu.classList.remove('hidden')
+      menu.style.display = 'block'
+      console.log("📤 Mobile menu shown, checking positioning...")
+      console.log("📤 Mobile menu classes:", menu.className)
+      console.log("📤 Mobile menu computed styles:", window.getComputedStyle(menu))
+      console.log("📤 Mobile menu position:", menu.getBoundingClientRect())
+      console.log("📤 Mobile menu parent:", menu.parentElement)
+      console.log("📤 Mobile button position:", button.getBoundingClientRect())
+      console.log("📤 Mobile button parent:", button.parentElement)
+    }
+  }
+
+  hideDesktopChatActionsMenu() {
+    const menu = document.getElementById('desktop-chat-actions-menu')
     if (menu) {
       menu.classList.add('hidden')
+      menu.style.display = 'none'
+    }
+  }
+
+  hideMobileChatActionsMenu() {
+    const menu = document.getElementById('mobile-chat-actions-menu')
+    if (menu) {
+      menu.classList.add('hidden')
+      menu.style.display = 'none'
     }
   }
 
@@ -589,7 +695,8 @@ export default class extends Controller {
       
       // Show modal
       modal.classList.remove('hidden')
-      this.hideChatActionsMenu()
+      this.hideDesktopChatActionsMenu()
+      this.hideMobileChatActionsMenu()
     }
   }
 
@@ -674,22 +781,48 @@ export default class extends Controller {
     this.hideMessageInput()
     this.hideChatActionsContainer()
     
+    // Hide mobile chat header
+    this.hideMobileChatHeader()
+    
     // Update chat list
     console.log("Calling updateChatList...")
     this.updateChatList()
   }
 
   showChatActionsContainer() {
-    const container = document.getElementById('chat-actions-container')
-    if (container) {
-      container.classList.remove('hidden')
+    console.log("Showing chat actions container...")
+    const desktopContainer = document.getElementById('chat-actions-container')
+    const mobileContainer = document.getElementById('mobile-chat-actions')
+    
+    console.log("Desktop container:", desktopContainer)
+    console.log("Mobile container:", mobileContainer)
+    
+    if (desktopContainer) {
+      desktopContainer.classList.remove('hidden')
+      desktopContainer.style.display = 'block'
+      console.log("Desktop container hidden class removed and display set to block")
+      // Double-check the state
+      setTimeout(() => {
+        console.log("Desktop container hidden after timeout:", desktopContainer.classList.contains('hidden'))
+        console.log("Desktop container display after timeout:", desktopContainer.style.display)
+        console.log("Desktop container classes after timeout:", desktopContainer.className)
+      }, 100)
+    }
+    if (mobileContainer) {
+      mobileContainer.classList.remove('hidden')
+      console.log("Mobile container hidden class removed")
     }
   }
 
   hideChatActionsContainer() {
-    const container = document.getElementById('chat-actions-container')
-    if (container) {
-      container.classList.add('hidden')
+    const desktopContainer = document.getElementById('chat-actions-container')
+    const mobileContainer = document.getElementById('mobile-chat-actions')
+    
+    if (desktopContainer) {
+      desktopContainer.classList.add('hidden')
+    }
+    if (mobileContainer) {
+      mobileContainer.classList.add('hidden')
     }
   }
   
@@ -1238,6 +1371,62 @@ Reset: ${usage.reset_requests}`
       sidebar.classList.add('-translate-x-full')
       overlay.classList.add('hidden')
       document.body.style.overflow = ''
+    }
+  }
+
+  showMobileChatHeader(chatTitle, chatSubtitle) {
+    const mobileLogo = document.getElementById('mobile-logo')
+    const mobileChatInfo = document.getElementById('mobile-chat-info')
+    const mobileChatTitle = document.getElementById('mobile-chat-title')
+    const mobileChatSubtitle = document.getElementById('mobile-chat-subtitle')
+    const mobileChatActions = document.getElementById('mobile-chat-actions')
+    const mobileBackBtn = document.getElementById('mobile-back-btn')
+    
+    if (mobileLogo && mobileChatInfo && mobileChatTitle && mobileChatSubtitle && mobileChatActions && mobileBackBtn) {
+      mobileLogo.classList.add('hidden')
+      mobileChatInfo.classList.remove('hidden')
+      mobileChatTitle.textContent = chatTitle
+      mobileChatSubtitle.textContent = chatSubtitle
+      mobileChatActions.classList.remove('hidden')
+      mobileBackBtn.classList.remove('hidden')
+    }
+  }
+
+  hideMobileChatHeader() {
+    const mobileLogo = document.getElementById('mobile-logo')
+    const mobileChatInfo = document.getElementById('mobile-chat-info')
+    const mobileChatActions = document.getElementById('mobile-chat-actions')
+    const mobileBackBtn = document.getElementById('mobile-back-btn')
+    
+    if (mobileLogo && mobileChatInfo && mobileChatActions && mobileBackBtn) {
+      mobileLogo.classList.remove('hidden')
+      mobileChatInfo.classList.add('hidden')
+      mobileChatActions.classList.add('hidden')
+      mobileBackBtn.classList.add('hidden')
+    }
+  }
+
+  monitorChatActionsContainer() {
+    const desktopContainer = document.getElementById('chat-actions-container')
+    if (desktopContainer) {
+      const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+            if (desktopContainer.classList.contains('hidden')) {
+              console.log("🚨 Chat actions container was hidden by:", mutation.target)
+              console.log("🚨 Mutation:", mutation)
+              console.trace("🚨 Stack trace for hiding chat actions")
+            }
+          }
+        })
+      })
+      
+      observer.observe(desktopContainer, {
+        attributes: true,
+        attributeFilter: ['class']
+      })
+      
+      console.log("🔍 Monitoring chat actions container for hidden class changes")
     }
   }
 }

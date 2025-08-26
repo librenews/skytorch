@@ -1,13 +1,13 @@
 <!-- Chat Actions Menu -->
 <div class="relative">
-  <button id="chat-actions-btn" class="p-2 rounded-lg hover:bg-gray-100 transition-colors group">
-    <svg class="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors" fill="currentColor" viewBox="0 0 24 24">
+  <button id="<%= mobile ? 'mobile-chat-actions-btn' : 'desktop-chat-actions-btn' %>" class="w-9 h-9 p-2 rounded-lg hover:bg-gray-100 transition-colors group flex items-center justify-center">
+    <svg class="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
       <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
     </svg>
   </button>
   
   <!-- Floating Menu -->
-  <div id="chat-actions-menu" class="absolute right-0 top-full mt-2 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[160px] hidden z-10">
+  <div id="<%= mobile ? 'mobile-chat-actions-menu' : 'desktop-chat-actions-menu' %>" class="bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[160px] hidden z-10" style="position: absolute; right: 0; top: 100%; margin-top: 0.5rem; display: none;">
     <button id="archive-chat-btn" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-3">
       <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>

@@ -102,23 +102,41 @@
     <!-- Mobile Header -->
     <header class="lg:hidden bg-white border-b border-gray-200 px-4 py-3 sticky top-0 z-40">
       <div class="flex items-center justify-between">
-        <!-- Logo -->
+        <!-- Logo/Back Button -->
         <div class="flex items-center space-x-3">
-          <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-white rounded-lg flex items-center justify-center">
-            <span class="text-lg">🚀</span>
+          <button id="mobile-back-btn" class="p-2 rounded-lg hover:bg-gray-100 transition-colors hidden">
+            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+          </button>
+          <div id="mobile-logo" class="flex items-center space-x-3">
+            <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-white rounded-lg flex items-center justify-center">
+              <span class="text-lg">🚀</span>
+            </div>
+            <div>
+              <h1 class="text-lg font-bold text-gray-900">SkyTorch</h1>
+              <p class="text-xs text-gray-500">Social AI Tools</p>
+            </div>
           </div>
-          <div>
-            <h1 class="text-lg font-bold text-gray-900">SkyTorch</h1>
-            <p class="text-xs text-gray-500">Social AI Tools</p>
+          <div id="mobile-chat-info" class="flex items-center space-x-3 hidden">
+            <div>
+              <h2 id="mobile-chat-title" class="text-lg font-semibold text-gray-900">Chat Title</h2>
+              <p id="mobile-chat-subtitle" class="text-xs text-gray-500">Chat Subtitle</p>
+            </div>
           </div>
         </div>
         
-        <!-- Mobile Menu Button -->
-        <button id="mobile-menu-btn" class="p-2 rounded-lg hover:bg-gray-100 transition-colors">
-          <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-          </svg>
-        </button>
+        <!-- Mobile Menu Button / Chat Actions -->
+        <div class="flex items-center space-x-2">
+          <div id="mobile-chat-actions" class="hidden">
+            <%= render 'chat_actions_menu', mobile: true %>
+          </div>
+          <button id="mobile-menu-btn" class="p-2 rounded-lg hover:bg-gray-100 transition-colors">
+            <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+          </button>
+        </div>
       </div>
     </header>
 
