@@ -98,7 +98,265 @@
     </script>
   </head>
 
-  <body class="h-full">
-    <%= yield %>
+  <body class="h-full bg-gray-50">
+    <!-- Mobile Header -->
+    <header class="lg:hidden bg-white border-b border-gray-200 px-4 py-3 sticky top-0 z-40">
+      <div class="flex items-center justify-between">
+        <!-- Logo -->
+        <div class="flex items-center space-x-3">
+          <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-white rounded-lg flex items-center justify-center">
+            <span class="text-lg">🚀</span>
+          </div>
+          <div>
+            <h1 class="text-lg font-bold text-gray-900">SkyTorch</h1>
+            <p class="text-xs text-gray-500">Social AI Tools</p>
+          </div>
+        </div>
+        
+        <!-- Mobile Menu Button -->
+        <button id="mobile-menu-btn" class="p-2 rounded-lg hover:bg-gray-100 transition-colors">
+          <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Layout Container -->
+    <div class="flex h-full lg:h-screen">
+      <!-- Sidebar -->
+      <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-80 bg-white border-r border-gray-200 transform -translate-x-full transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 lg:z-auto">
+        <!-- Desktop Sidebar Header -->
+        <div class="hidden lg:block px-6 py-4 border-b border-gray-200">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-white rounded-lg flex items-center justify-center">
+                <span class="text-xl">🚀</span>
+              </div>
+              <div>
+                <h1 class="text-xl font-bold text-gray-900">SkyTorch</h1>
+                <p class="text-sm text-gray-500">Social AI Tools</p>
+              </div>
+            </div>
+            <button id="sidebar-collapse-btn" class="p-2 rounded-lg hover:bg-gray-100 transition-colors" title="Collapse sidebar">
+              <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Sidebar Content -->
+        <div class="flex flex-col h-full">
+          <!-- Mobile Close Button -->
+          <div class="lg:hidden px-4 py-3 border-b border-gray-200">
+            <button id="mobile-close-btn" class="w-full flex items-center justify-between p-2 rounded-lg hover:bg-gray-100 transition-colors">
+              <span class="text-sm font-medium text-gray-700">Close Menu</span>
+              <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Sidebar Navigation -->
+          <nav class="flex-1 p-4 space-y-2">
+            <!-- New Chat Button -->
+            <button class="w-full text-left p-3 rounded-lg hover:bg-gray-100 transition-colors group">
+              <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+                  <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                  </svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-medium text-gray-900">New Chat</p>
+                  <p class="text-xs text-gray-500">Start a new conversation</p>
+                </div>
+              </div>
+            </button>
+            
+            <!-- Recent Chats Section -->
+            <div class="space-y-1">
+              <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider px-2">Recent Chats</h3>
+              <div class="space-y-1">
+                <!-- Sample Chat Items -->
+                <button class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors">
+                  <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center">
+                      <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                      </svg>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-medium text-gray-900 truncate">Sample Chat</p>
+                      <p class="text-xs text-gray-500">3 messages</p>
+                    </div>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </nav>
+
+          <!-- User Profile -->
+          <div class="p-4 border-t border-gray-200">
+            <div class="relative">
+              <button id="user-profile-btn" class="w-full text-left p-3 rounded-lg hover:bg-gray-100 transition-colors group">
+                <div class="flex items-center space-x-3">
+                  <!-- User Avatar -->
+                  <div class="flex-shrink-0">
+                    <% if current_user&.avatar_url.present? %>
+                      <img src="<%= current_user.avatar_url %>" alt="<%= current_user.display_name %>" class="w-10 h-10 rounded-full">
+                    <% else %>
+                      <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                        <%= current_user&.display_name&.first&.upcase || 'U' %>
+                      </div>
+                    <% end %>
+                  </div>
+                  
+                  <!-- User Info -->
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center space-x-2">
+                      <p class="text-sm font-medium text-gray-900 truncate"><%= current_user&.display_name || 'User Name' %></p>
+                      <!-- Connection Status Indicator -->
+                      <div id="provider-status-indicator" class="flex-shrink-0">
+                        <% if defined?(@connection_status) && @connection_status[:status] == 'connected' %>
+                          <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                        <% elsif defined?(@connection_status) && @connection_status[:status] == 'warning' %>
+                          <div class="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
+                        <% else %>
+                          <div class="w-2 h-2 bg-red-400 rounded-full"></div>
+                        <% end %>
+                      </div>
+                    </div>
+                    <p class="text-xs text-gray-500 truncate">@<%= current_user&.bluesky_handle || 'username' %></p>
+                    <p class="text-xs text-gray-400 truncate"><%= defined?(@current_provider) && @current_provider&.name || "No provider" %></p>
+                  </div>
+                  
+                  <!-- Dropdown Arrow -->
+                  <div class="flex-shrink-0">
+                    <svg class="w-4 h-4 text-gray-400 group-hover:text-gray-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                  </div>
+                </div>
+              </button>
+              
+              <!-- Floating Menu -->
+              <div id="user-profile-menu" class="absolute bottom-full left-0 mb-2 bg-white rounded-lg shadow-lg border border-gray-200 py-1 hidden z-50 min-w-[200px]">
+                <button id="settings-btn" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-3">
+                  <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                  </svg>
+                  <span>Settings</span>
+                </button>
+                <%= link_to sign_out_path, method: :delete, class: "w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-3" do %>
+                  <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                  </svg>
+                  <span>Sign Out</span>
+                <% end %>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Mobile Overlay -->
+      <div id="mobile-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden hidden"></div>
+
+      <!-- Main Content Area -->
+      <main class="flex-1 flex flex-col lg:ml-0">
+        <!-- Desktop Header -->
+        <header class="hidden lg:block bg-white border-b border-gray-200 px-6 py-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-xl font-semibold text-gray-900">Welcome to SkyTorch</h2>
+              <p class="text-sm text-gray-500">Start a new conversation or select an existing chat</p>
+            </div>
+            <div class="flex items-center space-x-2">
+              <button class="p-2 rounded-lg hover:bg-gray-100 transition-colors">
+                <svg class="w-5 h-5 text-gray-500" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <!-- Content Area -->
+        <div class="flex-1 flex flex-col">
+          <%= yield %>
+        </div>
+      </main>
+    </div>
+
+    <!-- Mobile Menu JavaScript -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileCloseBtn = document.getElementById('mobile-close-btn');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('mobile-overlay');
+        const sidebarCollapseBtn = document.getElementById('sidebar-collapse-btn');
+
+        // Mobile menu toggle
+        function openMobileMenu() {
+          sidebar.classList.add('translate-x-0');
+          sidebar.classList.remove('-translate-x-full');
+          overlay.classList.remove('hidden');
+          document.body.style.overflow = 'hidden';
+        }
+
+        function closeMobileMenu() {
+          sidebar.classList.remove('translate-x-0');
+          sidebar.classList.add('-translate-x-full');
+          overlay.classList.add('hidden');
+          document.body.style.overflow = '';
+        }
+
+        // Event listeners
+        mobileMenuBtn?.addEventListener('click', openMobileMenu);
+        mobileCloseBtn?.addEventListener('click', closeMobileMenu);
+        overlay?.addEventListener('click', closeMobileMenu);
+
+        // Desktop sidebar collapse
+        sidebarCollapseBtn?.addEventListener('click', function() {
+          sidebar.classList.toggle('lg:w-20');
+          sidebar.classList.toggle('lg:w-80');
+        });
+
+        // Close mobile menu on escape key
+        document.addEventListener('keydown', function(e) {
+          if (e.key === 'Escape') {
+            closeMobileMenu();
+          }
+        });
+
+        // User profile menu functionality
+        const userProfileBtn = document.getElementById('user-profile-btn');
+        const userProfileMenu = document.getElementById('user-profile-menu');
+        const settingsBtn = document.getElementById('settings-btn');
+
+        userProfileBtn?.addEventListener('click', function(e) {
+          e.preventDefault();
+          userProfileMenu.classList.toggle('hidden');
+        });
+
+        // Close user profile menu when clicking outside
+        document.addEventListener('click', function(e) {
+          if (!userProfileBtn?.contains(e.target) && !userProfileMenu?.contains(e.target)) {
+            userProfileMenu?.classList.add('hidden');
+          }
+        });
+
+        // Settings button functionality
+        settingsBtn?.addEventListener('click', function(e) {
+          e.preventDefault();
+          // Add settings modal functionality here
+          console.log('Settings clicked');
+        });
+      });
+    </script>
   </body>
 </html>
