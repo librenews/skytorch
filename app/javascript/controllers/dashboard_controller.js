@@ -4,7 +4,6 @@ export default class extends Controller {
   static targets = ["messagesContainer", "messageInput", "messageInputContainer", "chatTitle", "chatSubtitle", "sendBtn", "settingsModal"]
   
   connect() {
-    console.log("Dashboard controller connected!")
     this.currentChatId = null
     this.currentChatTitle = null
     this.chatToDelete = null
@@ -81,6 +80,18 @@ export default class extends Controller {
       const deleteModal = document.getElementById('delete-chat-modal')
       if (deleteModal && e.target === deleteModal) {
         this.hideDeleteConfirmation()
+      }
+
+      // User profile button clicks
+      if (e.target.closest('#user-profile-btn')) {
+        e.preventDefault()
+        this.toggleUserProfileMenu()
+      }
+
+      // Close user profile menu when clicking outside
+      const userProfileMenu = document.getElementById('user-profile-menu')
+      if (userProfileMenu && !e.target.closest('#user-profile-btn') && !e.target.closest('#user-profile-menu')) {
+        this.hideUserProfileMenu()
       }
     })
     
@@ -315,8 +326,8 @@ export default class extends Controller {
     this.addMessage(userMessage)
     
     // Check if this is the first message and update title
-    const messageElements = this.messagesContainerTarget.querySelectorAll('.flex.space-x-4.mb-4')
-    const isFirstMessage = messageElements.length === 1 // Just the user message we just added
+    const messageElementsAfterAdd = this.messagesContainerTarget.querySelectorAll('.flex.space-x-4.mb-4')
+    const isFirstMessage = messageElementsAfterAdd.length === 1 // Just the user message we just added
     console.log("Is first message:", isFirstMessage)
     
     if (isFirstMessage) {
@@ -393,6 +404,31 @@ export default class extends Controller {
   
   closeSettings() {
     this.settingsModalTarget.classList.add('hidden')
+  }
+
+  toggleUserProfileMenu() {
+    const menu = document.getElementById('user-profile-menu')
+    if (menu) {
+      if (menu.classList.contains('hidden')) {
+        this.showUserProfileMenu()
+      } else {
+        this.hideUserProfileMenu()
+      }
+    }
+  }
+
+  showUserProfileMenu() {
+    const menu = document.getElementById('user-profile-menu')
+    if (menu) {
+      menu.classList.remove('hidden')
+    }
+  }
+
+  hideUserProfileMenu() {
+    const menu = document.getElementById('user-profile-menu')
+    if (menu) {
+      menu.classList.add('hidden')
+    }
   }
   
     showThinkingIndicator() {

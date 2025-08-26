@@ -4,13 +4,11 @@
 
 import { application } from "./application"
 
-import HelloController from "./hello_controller"
-application.register("hello", HelloController)
+import AutosizeController from "./autosize_controller"
+application.register("autosize", AutosizeController)
 
 import DashboardController from "./dashboard_controller"
 application.register("dashboard", DashboardController)
 
-import AutosizeController from "./autosize_controller"
-application.register("autosize", AutosizeController)
-
-console.log("Controllers registered:", application.controllers)
+import HelloController from "./hello_controller"
+application.register("hello", HelloController)
