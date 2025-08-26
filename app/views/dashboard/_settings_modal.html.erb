@@ -1,0 +1,43 @@
+<!-- Settings Modal -->
+<div id="settings-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50" data-dashboard-target="settingsModal">
+  <div class="flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+      <div class="p-6 border-b border-gray-200">
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-semibold text-gray-900">Settings</h3>
+          <button id="close-settings" class="text-gray-400 hover:text-gray-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div class="p-6">
+        <div class="space-y-6">
+          <div>
+            <h4 class="text-sm font-medium text-gray-900 mb-4">LLM Providers</h4>
+            <div class="space-y-3">
+              <% @llm_providers.each do |provider| %>
+                <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                  <div>
+                    <p class="font-medium text-gray-900"><%= provider.name %></p>
+                    <p class="text-sm text-gray-500"><%= provider.provider_type.titleize %> • <%= provider.default_model %></p>
+                  </div>
+                  <div class="flex items-center space-x-2">
+                    <% if provider.is_active %>
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        Active
+                      </span>
+                    <% else %>
+                      <button class="text-blue-600 hover:text-blue-700 text-sm font-medium">Set Active</button>
+                    <% end %>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
