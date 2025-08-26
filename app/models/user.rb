@@ -2,6 +2,7 @@ class User < ApplicationRecord
   has_many :chats, dependent: :destroy
   has_many :messages, through: :chats
   has_many :llm_providers, dependent: :destroy
+  has_many :tools, dependent: :destroy
 
   validates :bluesky_did, presence: true, uniqueness: true
   validates :bluesky_handle, presence: true, uniqueness: true
@@ -24,6 +25,23 @@ class User < ApplicationRecord
 
   def avatar_display_url
     avatar_url.presence || "https://ui-avatars.com/api/?name=#{display_name}&background=6366f1&color=fff"
+  end
+
+  # Toolbox methods
+  def toolbox
+    tools.where(visibility: ['private', 'unlisted'])
+  end
+  
+  def public_tools
+    tools.where(visibility: 'public')
+  end
+  
+  def add_to_toolbox(tool)
+    tool.update(user: self, visibility: 'private') if tool.visibility == 'public'
+  end
+  
+  def remove_from_toolbox(tool)
+    tool.destroy if tool.user == self && tool.visibility == 'private'
   end
 
   # Profile caching methods

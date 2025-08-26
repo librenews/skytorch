@@ -45,4 +45,10 @@ Rails.application.routes.draw do
 
   # Defines the root path route ("/")
   # root "posts#index"
+  resources :tools do
+    member do
+      post :add_to_toolbox
+    end
+  end
+  get 'discover', to: 'tools#discover'
 end

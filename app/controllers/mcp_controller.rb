@@ -5,45 +5,29 @@ class McpController < ApplicationController
     # Parse the request
     request_data = JSON.parse(request.body.read)
     
-    # Handle different types of MCP requests
-    case request_data["method"]
-    when "tools/list"
-      render json: {
-        jsonrpc: "2.0",
-        id: request_data["id"],
-        result: {
-          tools: SkyTorchMcpServer.available_tools
-        }
-      }
+    # Handle the request using the MCP server
+    begin
+      # Try to load the service class if it's not already loaded
+      unless defined?(SkytorchMcpServer)
+        Rails.logger.info "Loading SkytorchMcpServer service..."
+        load Rails.root.join('app', 'services', 'skytorch_mcp_server.rb')
+      end
       
-    when "tools/call"
-      tool_name = request_data["params"]["name"]
-      arguments = request_data["params"]["arguments"]
+      Rails.logger.info "Checking if SkytorchMcpServer exists: #{defined?(SkytorchMcpServer)}"
       
-              result = SkyTorchMcpServer.call_tool(tool_name, arguments)
-      
-      render json: {
-        jsonrpc: "2.0",
-        id: request_data["id"],
-        result: {
-          content: [
-            {
-              type: "text",
-              text: result.to_json
-            }
-          ]
-        }
-      }
-      
-    else
+      response = SkytorchMcpServer.handle_request(request_data)
+      render json: response
+    rescue => e
+      Rails.logger.error "MCP Error: #{e.message}"
+      Rails.logger.error "Backtrace: #{e.backtrace.join("\n")}"
       render json: {
         jsonrpc: "2.0",
         id: request_data["id"],
         error: {
-          code: -32601,
-          message: "Method not found"
+          code: -32603,
+          message: "Internal error: #{e.message}"
         }
-      }
+      }, status: 500
     end
   end
 end

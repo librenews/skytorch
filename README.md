@@ -21,7 +21,7 @@ A Rails 8 application that integrates ruby_llm for chat functionality and ruby_l
 ### Services
 - `ChatService`: Handles chat interactions with LLM and MCP integration
 - `McpServerProvider`: Stub class for dynamically providing MCP servers
-- `SkyTorchMcpServer`: MCP server implementation with test tools
+- `SkytorchMcpServer`: MCP server implementation with test tools
 
 ### MCP Tools
 The built-in MCP server provides:

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_24_235737) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_25_090000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -51,6 +51,25 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_24_235737) do
     t.index ["chat_id"], name: "index_messages_on_chat_id"
   end
 
+  create_table "tools", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "name", null: false
+    t.text "description"
+    t.string "tool_type", null: false
+    t.string "visibility", default: "private"
+    t.text "tags", default: [], array: true
+    t.jsonb "definition", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["definition"], name: "index_tools_on_definition", using: :gin
+    t.index ["tags"], name: "index_tools_on_tags", using: :gin
+    t.index ["tool_type", "visibility"], name: "index_tools_on_tool_type_and_visibility"
+    t.index ["tool_type"], name: "index_tools_on_tool_type"
+    t.index ["user_id", "visibility"], name: "index_tools_on_user_id_and_visibility"
+    t.index ["user_id"], name: "index_tools_on_user_id"
+    t.index ["visibility"], name: "index_tools_on_visibility"
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "bluesky_did"
     t.string "bluesky_handle"
@@ -66,4 +85,5 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_24_235737) do
   add_foreign_key "chats", "users"
   add_foreign_key "llm_providers", "users"
   add_foreign_key "messages", "chats"
+  add_foreign_key "tools", "users"
 end

@@ -144,8 +144,18 @@
         <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
           <span class="text-3xl">🚀</span>
         </div>
-                    <h3 class="text-lg font-medium text-gray-900 mb-2">Welcome to SkyTorch</h3>
-                  <p class="text-gray-500 mb-6">Social AI tools with MCP integration</p>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">Welcome to SkyTorch</h3>
+        <p class="text-gray-500 mb-6">Social AI tools with MCP integration</p>
+        
+        <!-- MCP Testing Section -->
+        <div class="mb-6 p-4 bg-gray-100 rounded-lg max-w-md mx-auto">
+          <h4 class="text-sm font-semibold mb-2">MCP Testing</h4>
+          <button onclick="testMCP()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 text-sm">
+            Test MCP Endpoint
+          </button>
+          <div id="mcp-test-results" class="mt-2 text-xs"></div>
+        </div>
+        
         <button id="start-chat-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
           Start New Chat
         </button>
@@ -253,3 +263,87 @@
     </div>
   </div>
 </div>
+
+<script>
+async function testMCP() {
+  const resultsDiv = document.getElementById('mcp-test-results');
+  resultsDiv.innerHTML = 'Testing...';
+  
+  try {
+    console.log('Starting MCP test...');
+    
+    // Test tools/list
+    console.log('Testing tools/list...');
+    const listResponse = await fetch('/mcp', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/list"
+      })
+    });
+    
+    console.log('List response status:', listResponse.status);
+    console.log('List response headers:', listResponse.headers);
+    
+    if (!listResponse.ok) {
+      const errorText = await listResponse.text();
+      throw new Error(`HTTP ${listResponse.status}: ${errorText}`);
+    }
+    
+    const listResult = await listResponse.json();
+    console.log('List result:', listResult);
+    
+    // Test tools/call
+    console.log('Testing tools/call...');
+    const callResponse = await fetch('/mcp', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 2,
+        method: "tools/call",
+        params: {
+          name: "get_chat_info",
+          arguments: { chat_id: 1 }
+        }
+      })
+    });
+    
+    console.log('Call response status:', callResponse.status);
+    
+    if (!callResponse.ok) {
+      const errorText = await callResponse.text();
+      throw new Error(`HTTP ${callResponse.status}: ${errorText}`);
+    }
+    
+    const callResult = await callResponse.json();
+    console.log('Call result:', callResult);
+    
+    resultsDiv.innerHTML = `
+      <div class="text-green-600">✓ MCP endpoint working!</div>
+      <div class="mt-1">
+        <strong>Available tools:</strong> ${listResult.result.tools.length}
+      </div>
+      <div class="mt-1">
+        <strong>Tool call result:</strong> ${JSON.stringify(callResult.result)}
+      </div>
+    `;
+    
+  } catch (error) {
+    console.error('MCP test error:', error);
+    resultsDiv.innerHTML = `
+      <div class="text-red-600">✗ MCP test failed</div>
+      <div class="text-xs text-gray-600 mt-1">${error.message}</div>
+      <div class="text-xs text-gray-500 mt-1">Check browser console for details</div>
+    `;
+  }
+}
+</script>
