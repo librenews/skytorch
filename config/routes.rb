@@ -13,6 +13,7 @@ Rails.application.routes.draw do
   get "dashboard/index", as: :dashboard
   get "dashboard/connection_status", to: "dashboard#connection_status"
   get "dashboard/load_more_chats", to: "dashboard#load_more_chats"
+  patch "dashboard/update_chat_status/:id", to: "dashboard#update_chat_status", as: :update_chat_status
   get "llm_providers/index"
   get "llm_providers/create"
   get "llm_providers/update"

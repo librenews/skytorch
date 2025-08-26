@@ -1,7 +1,7 @@
 class ChatsController < ApplicationController
   before_action :authenticate_user!
   def index
-    @chats = current_user.chats.order(created_at: :desc)
+    @chats = current_user.chats.active.order(created_at: :desc)
     
     respond_to do |format|
       format.json { render json: @chats.map { |chat| { 

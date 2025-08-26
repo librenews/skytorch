@@ -2,7 +2,7 @@ class DashboardController < ApplicationController
   before_action :set_current_user
 
   def index
-    @chats = current_user.chats.recent.limit(8)
+    @chats = current_user.chats.active.recent.limit(8)
     @llm_providers = current_user.using_global_provider? ? LlmProvider.global : current_user.llm_providers
     @current_provider = current_user.default_provider
     @connection_status = check_llm_connection_status
@@ -26,7 +26,7 @@ class DashboardController < ApplicationController
     per_page = 10
     offset = (page - 1) * per_page + 8 # Start after initial 8
     
-    @chats = current_user.chats.recent
+    @chats = current_user.chats.active.recent
                  .offset(offset)
                  .limit(per_page)
     
@@ -40,6 +40,34 @@ class DashboardController < ApplicationController
       has_more: @chats.count == per_page,
       next_page: page + 1
     }
+  end
+
+  def update_chat_status
+    chat = current_user.chats.find(params[:id])
+    action = params[:status]
+    
+                  case action
+              when 'delete'
+                if chat.destroy
+                  render json: { success: true, message: "Chat deleted" }
+                else
+                  render json: { success: false, message: "Failed to delete chat" }, status: :unprocessable_entity
+                end
+              when 'archive'
+                if chat.update(status: :archived)
+                  render json: { success: true, message: "Chat archived" }
+                else
+                  render json: { success: false, message: "Failed to archive chat" }, status: :unprocessable_entity
+                end
+              when 'report'
+                if chat.update(status: :reported)
+                  render json: { success: true, message: "Chat reported" }
+                else
+                  render json: { success: false, message: "Failed to report chat" }, status: :unprocessable_entity
+                end
+              else
+                render json: { success: false, message: "Invalid action" }, status: :unprocessable_entity
+              end
   end
 
   private

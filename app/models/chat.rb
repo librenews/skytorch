@@ -5,7 +5,10 @@ class Chat < ApplicationRecord
   validates :title, presence: true
   validates :user, presence: true
   
+  enum :status, { active: 0, archived: 1, reported: 2 }
+  
   scope :recent, -> { order(updated_at: :desc) }
+  scope :active, -> { where(status: :active) }
   
   def message_count
     messages.count

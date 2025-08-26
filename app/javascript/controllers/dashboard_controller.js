@@ -11,6 +11,16 @@ export default class extends Controller {
     this.setupAutoResize()
     this.startProviderMonitoring()
     this.setupInfiniteScroll()
+    
+    // Debug: Check if modal elements exist
+    console.log("Modal elements check:")
+    console.log("chat-action-modal:", document.getElementById('chat-action-modal'))
+    console.log("modal-icon:", document.getElementById('modal-icon'))
+    console.log("modal-title:", document.getElementById('modal-title'))
+    console.log("modal-subtitle:", document.getElementById('modal-subtitle'))
+    console.log("modal-description:", document.getElementById('modal-description'))
+    console.log("confirm-action:", document.getElementById('confirm-action'))
+    console.log("cancel-action:", document.getElementById('cancel-action'))
   }
   
   setupEventListeners() {
@@ -93,6 +103,58 @@ export default class extends Controller {
       if (userProfileMenu && !e.target.closest('#user-profile-btn') && !e.target.closest('#user-profile-menu')) {
         this.hideUserProfileMenu()
       }
+
+      // Chat actions button clicks
+      if (e.target.closest('#chat-actions-btn')) {
+        e.preventDefault()
+        this.toggleChatActionsMenu()
+      }
+
+      // Close chat actions menu when clicking outside
+      const chatActionsMenu = document.getElementById('chat-actions-menu')
+      if (chatActionsMenu && !e.target.closest('#chat-actions-btn') && !e.target.closest('#chat-actions-menu')) {
+        this.hideChatActionsMenu()
+      }
+
+      // Chat action buttons
+      if (e.target.closest('#archive-chat-btn')) {
+        e.preventDefault()
+        console.log("Archive button clicked")
+        this.showChatActionModal('archive', 'Archive Chat?', 'This will move the chat to your archived chats.', 'bg-blue-100', 'text-blue-600', 'Archive')
+      }
+
+      if (e.target.closest('#report-chat-btn')) {
+        e.preventDefault()
+        console.log("Report button clicked")
+        this.showChatActionModal('report', 'Report Chat?', 'This will flag the chat for review by our team.', 'bg-yellow-100', 'text-yellow-600', 'Report')
+      }
+
+      if (e.target.closest('#delete-chat-btn')) {
+        e.preventDefault()
+        console.log("Delete button clicked")
+        this.showChatActionModal('delete', 'Delete Chat?', 'This will permanently delete the chat and all its messages.', 'bg-red-100', 'text-red-600', 'Delete')
+      }
+
+      // Cancel action button
+      if (e.target.closest('#cancel-action')) {
+        e.preventDefault()
+        console.log("Cancel button clicked")
+        this.hideChatActionModal()
+      }
+
+      // Confirm action button
+      if (e.target.closest('#confirm-action')) {
+        e.preventDefault()
+        console.log("Confirm button clicked")
+        this.confirmChatAction()
+      }
+
+      // Close chat action modal on backdrop click
+      const chatActionModal = document.getElementById('chat-action-modal')
+      if (chatActionModal && e.target === chatActionModal) {
+        console.log("Backdrop clicked, hiding modal")
+        this.hideChatActionModal()
+      }
     })
     
     // Send button
@@ -113,6 +175,39 @@ export default class extends Controller {
         }
       })
     }
+
+    // Escape key to close modals
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        this.hideChatActionModal()
+        this.hideUserProfileMenu()
+        this.hideChatActionsMenu()
+      }
+    })
+
+    // Direct event listeners for modal buttons (since modal is outside main element)
+    document.addEventListener('click', (e) => {
+      // Cancel action button
+      if (e.target.closest('#cancel-action')) {
+        e.preventDefault()
+        console.log("Cancel button clicked (direct)")
+        this.hideChatActionModal()
+      }
+
+      // Confirm action button
+      if (e.target.closest('#confirm-action')) {
+        e.preventDefault()
+        console.log("Confirm button clicked (direct)")
+        this.confirmChatAction()
+      }
+
+      // Close chat action modal on backdrop click
+      const chatActionModal = document.getElementById('chat-action-modal')
+      if (chatActionModal && e.target === chatActionModal) {
+        console.log("Backdrop clicked (direct), hiding modal")
+        this.hideChatActionModal()
+      }
+    })
     
     // Close modal on backdrop click
     if (this.hasSettingsModalTarget) {
@@ -227,6 +322,7 @@ export default class extends Controller {
         this.currentChatTitle = chat.title
         this.displayChat(chat)
         this.showMessageInput()
+        this.showChatActionsContainer()
         
         // Highlight selected chat in sidebar
         document.querySelectorAll('.chat-item').forEach(item => {
@@ -391,6 +487,10 @@ export default class extends Controller {
     this.messageInputContainerTarget.style.display = 'block'
     this.messageInputTarget.focus()
   }
+
+  hideMessageInput() {
+    this.messageInputContainerTarget.style.display = 'none'
+  }
   
   scrollToBottom() {
     setTimeout(() => {
@@ -428,6 +528,164 @@ export default class extends Controller {
     const menu = document.getElementById('user-profile-menu')
     if (menu) {
       menu.classList.add('hidden')
+    }
+  }
+
+  toggleChatActionsMenu() {
+    const menu = document.getElementById('chat-actions-menu')
+    if (menu) {
+      if (menu.classList.contains('hidden')) {
+        this.showChatActionsMenu()
+      } else {
+        this.hideChatActionsMenu()
+      }
+    }
+  }
+
+  showChatActionsMenu() {
+    const menu = document.getElementById('chat-actions-menu')
+    if (menu) {
+      menu.classList.remove('hidden')
+    }
+  }
+
+  hideChatActionsMenu() {
+    const menu = document.getElementById('chat-actions-menu')
+    if (menu) {
+      menu.classList.add('hidden')
+    }
+  }
+
+  showChatActionModal(action, title, description, iconBgClass, iconTextClass, buttonText) {
+    console.log("Showing chat action modal:", action)
+    this.currentChatAction = action
+    
+    const modal = document.getElementById('chat-action-modal')
+    const modalIcon = document.getElementById('modal-icon')
+    const modalTitle = document.getElementById('modal-title')
+    const modalSubtitle = document.getElementById('modal-subtitle')
+    const modalDescription = document.getElementById('modal-description')
+    const confirmButton = document.getElementById('confirm-action')
+    
+    console.log("Modal elements found:", { modal, modalIcon, modalTitle, modalSubtitle, modalDescription, confirmButton })
+    
+    if (modal && modalIcon && modalTitle && modalSubtitle && modalDescription && confirmButton) {
+      // Set icon
+      modalIcon.className = `w-10 h-10 ${iconBgClass} rounded-full flex items-center justify-center`
+      modalIcon.innerHTML = this.getActionIcon(action, iconTextClass)
+      
+      // Set text
+      modalTitle.textContent = title
+      modalSubtitle.textContent = 'This action cannot be undone.'
+      modalDescription.innerHTML = description.replace('the chat', `<span class="font-medium">${this.currentChatTitle}</span>`)
+      
+      // Set button
+      confirmButton.textContent = buttonText
+      confirmButton.className = `px-4 py-2 ${action === 'delete' ? 'bg-red-600 hover:bg-red-700' : action === 'archive' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-yellow-600 hover:bg-yellow-700'} text-white rounded-lg font-medium transition-colors`
+      
+      // Show modal
+      modal.classList.remove('hidden')
+      this.hideChatActionsMenu()
+    }
+  }
+
+  hideChatActionModal() {
+    console.log("Hiding chat action modal")
+    const modal = document.getElementById('chat-action-modal')
+    if (modal) {
+      modal.classList.add('hidden')
+      console.log("Modal hidden")
+    } else {
+      console.log("Modal not found")
+    }
+    this.currentChatAction = null
+  }
+
+  getActionIcon(action, textClass) {
+    switch (action) {
+      case 'archive':
+        return `<svg class="w-6 h-6 ${textClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
+        </svg>`
+      case 'report':
+        return `<svg class="w-6 h-6 ${textClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+        </svg>`
+      case 'delete':
+        return `<svg class="w-6 h-6 ${textClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+        </svg>`
+      default:
+        return ''
+    }
+  }
+
+  async confirmChatAction() {
+    if (!this.currentChatAction || !this.currentChatId) return
+    
+    console.log("Confirming action:", this.currentChatAction, "for chat:", this.currentChatId)
+    
+    try {
+      const response = await fetch(`/dashboard/update_chat_status/${this.currentChatId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+        },
+        body: JSON.stringify({
+          status: this.currentChatAction
+        })
+      })
+      
+      if (response.ok) {
+        const result = await response.json()
+        console.log("Action result:", result)
+        
+        // Hide modal
+        this.hideChatActionModal()
+        
+        // Return to dashboard
+        this.returnToDashboard()
+      } else {
+        const errorText = await response.text()
+        console.error('Failed to update chat status:', response.status, errorText)
+      }
+    } catch (error) {
+      console.error('Error updating chat status:', error)
+    }
+  }
+
+  returnToDashboard() {
+    console.log("Returning to dashboard...")
+    
+    // Clear current chat
+    this.currentChatId = null
+    this.currentChatTitle = null
+    
+    // Update UI
+    this.chatTitleTarget.textContent = 'Welcome to SkyTorch'
+    this.chatSubtitleTarget.textContent = 'Start a new conversation or select an existing chat'
+    this.messagesContainerTarget.innerHTML = this.getWelcomeMessage()
+    this.hideMessageInput()
+    this.hideChatActionsContainer()
+    
+    // Update chat list
+    console.log("Calling updateChatList...")
+    this.updateChatList()
+  }
+
+  showChatActionsContainer() {
+    const container = document.getElementById('chat-actions-container')
+    if (container) {
+      container.classList.remove('hidden')
+    }
+  }
+
+  hideChatActionsContainer() {
+    const container = document.getElementById('chat-actions-container')
+    if (container) {
+      container.classList.add('hidden')
     }
   }
   
@@ -472,10 +730,16 @@ export default class extends Controller {
       })
       if (response.ok) {
         const chats = await response.json()
+        console.log("Received chats:", chats)
+        
         const chatList = document.getElementById('chat-list')
+        console.log("Chat list element:", chatList)
+        
         if (chatList) {
           // Only update the first 8 chats (initial load)
           const initialChats = chats.slice(0, 8)
+          console.log("Initial chats to display:", initialChats)
+          
           chatList.innerHTML = initialChats.map(chat => `
             <div class="chat-item-container group relative" data-chat-id="${chat.id}">
               <button class="chat-item w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors" data-chat-id="${chat.id}">
@@ -494,9 +758,15 @@ export default class extends Controller {
             </div>
           `).join('')
           
+          console.log("Chat list updated with", initialChats.length, "chats")
+          
           // Reset infinite scroll state
           this.resetInfiniteScroll()
+        } else {
+          console.log("Chat list element not found!")
         }
+      } else {
+        console.error('Failed to fetch chats:', response.status)
       }
     } catch (error) {
       console.error('Error updating chat list:', error)
