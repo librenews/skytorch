@@ -4,6 +4,7 @@ export default class extends Controller {
   static targets = ["messagesContainer", "messageInput", "messageInputContainer", "chatTitle", "chatSubtitle", "sendBtn", "settingsModal"]
   
   connect() {
+    console.log("Dashboard controller connected!")
     this.currentChatId = null
     this.currentChatTitle = null
     this.chatToDelete = null
@@ -332,6 +333,9 @@ export default class extends Controller {
         if (selectedItem) {
           selectedItem.classList.add('active')
         }
+        
+        // Close mobile sidebar when chat is selected
+        this.closeMobileSidebar()
         
 
       }
@@ -1223,5 +1227,17 @@ Reset: ${usage.reset_requests}`
         </button>
       </div>
     `
+  }
+
+  closeMobileSidebar() {
+    const sidebar = document.getElementById('sidebar')
+    const overlay = document.getElementById('mobile-overlay')
+    
+    if (sidebar && overlay) {
+      sidebar.classList.remove('translate-x-0')
+      sidebar.classList.add('-translate-x-full')
+      overlay.classList.add('hidden')
+      document.body.style.overflow = ''
+    }
   }
 }
