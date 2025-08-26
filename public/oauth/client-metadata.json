@@ -14,7 +14,7 @@
   "response_types": [
     "code"
   ],
-  "scope": "atproto transition:generic",
+  "scope": "atproto transition:generic transition:chat.bsky",
   "token_endpoint_auth_method": "private_key_jwt",
   "token_endpoint_auth_signing_alg": "ES256",
   "jwks": {
