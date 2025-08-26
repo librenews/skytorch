@@ -174,7 +174,12 @@
           </div>
 
           <!-- User Profile -->
-          <%= render 'dashboard/user_profile' %>
+          <div class="lg:hidden sticky bottom-0 bg-white border-t border-gray-200">
+            <%= render 'dashboard/user_profile', mobile: true %>
+          </div>
+          <div class="hidden lg:block border-t border-gray-200">
+            <%= render 'dashboard/user_profile', mobile: false %>
+          </div>
         </div>
       </aside>
 

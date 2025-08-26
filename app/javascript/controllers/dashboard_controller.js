@@ -96,10 +96,16 @@ export default class extends Controller {
         this.hideDeleteConfirmation()
       }
 
-      // User profile button clicks
-      if (e.target.closest('#user-profile-btn')) {
+      // Desktop user profile button clicks
+      if (e.target.closest('#desktop-user-profile-btn')) {
         e.preventDefault()
-        this.toggleUserProfileMenu()
+        this.toggleDesktopUserProfileMenu()
+      }
+
+      // Mobile user profile button clicks
+      if (e.target.closest('#mobile-user-profile-btn')) {
+        e.preventDefault()
+        this.toggleMobileUserProfileMenu()
       }
 
       // Mobile back button clicks
@@ -109,10 +115,16 @@ export default class extends Controller {
         this.returnToDashboard()
       }
 
-      // Close user profile menu when clicking outside
-      const userProfileMenu = document.getElementById('user-profile-menu')
-      if (userProfileMenu && !e.target.closest('#user-profile-btn') && !e.target.closest('#user-profile-menu')) {
-        this.hideUserProfileMenu()
+      // Close user profile menus when clicking outside
+      const desktopUserProfileMenu = document.getElementById('desktop-user-profile-menu')
+      const mobileUserProfileMenu = document.getElementById('mobile-user-profile-menu')
+      
+      if (desktopUserProfileMenu && !e.target.closest('#desktop-user-profile-btn') && !e.target.closest('#desktop-user-profile-menu')) {
+        this.hideDesktopUserProfileMenu()
+      }
+      
+      if (mobileUserProfileMenu && !e.target.closest('#mobile-user-profile-btn') && !e.target.closest('#mobile-user-profile-menu')) {
+        this.hideMobileUserProfileMenu()
       }
 
       // Desktop chat actions button clicks
@@ -211,7 +223,8 @@ export default class extends Controller {
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         this.hideChatActionModal()
-        this.hideUserProfileMenu()
+        this.hideDesktopUserProfileMenu()
+        this.hideMobileUserProfileMenu()
         this.hideDesktopChatActionsMenu()
         this.hideMobileChatActionsMenu()
       }
@@ -555,26 +568,87 @@ export default class extends Controller {
     this.settingsModalTarget.classList.add('hidden')
   }
 
-  toggleUserProfileMenu() {
-    const menu = document.getElementById('user-profile-menu')
-    if (menu) {
+  toggleDesktopUserProfileMenu() {
+    console.log("🔄 Toggle desktop user profile menu called")
+    const menu = document.getElementById('desktop-user-profile-menu')
+    const button = document.getElementById('desktop-user-profile-btn')
+    console.log("🔍 Desktop user profile menu element found:", menu)
+    console.log("🔍 Desktop user profile button element found:", button)
+    if (menu && button) {
       if (menu.classList.contains('hidden')) {
-        this.showUserProfileMenu()
+        console.log("📤 Showing desktop user profile menu")
+        this.showDesktopUserProfileMenu()
       } else {
-        this.hideUserProfileMenu()
+        console.log("📥 Hiding desktop user profile menu")
+        this.hideDesktopUserProfileMenu()
       }
+    } else {
+      console.log("❌ Desktop user profile menu or button element not found!")
+      console.log("❌ Menu:", menu)
+      console.log("❌ Button:", button)
     }
   }
 
-  showUserProfileMenu() {
-    const menu = document.getElementById('user-profile-menu')
-    if (menu) {
+  toggleMobileUserProfileMenu() {
+    console.log("🔄 Toggle mobile user profile menu called")
+    const menu = document.getElementById('mobile-user-profile-menu')
+    const button = document.getElementById('mobile-user-profile-btn')
+    console.log("🔍 Mobile user profile menu element found:", menu)
+    console.log("🔍 Mobile user profile button element found:", button)
+    if (menu && button) {
+      if (menu.classList.contains('hidden')) {
+        console.log("📤 Showing mobile user profile menu")
+        this.showMobileUserProfileMenu()
+      } else {
+        console.log("📥 Hiding mobile user profile menu")
+        this.hideMobileUserProfileMenu()
+      }
+    } else {
+      console.log("❌ Mobile user profile menu or button element not found!")
+      console.log("❌ Menu:", menu)
+      console.log("❌ Button:", button)
+    }
+  }
+
+  showDesktopUserProfileMenu() {
+    const menu = document.getElementById('desktop-user-profile-menu')
+    const button = document.getElementById('desktop-user-profile-btn')
+    if (menu && button) {
       menu.classList.remove('hidden')
+      console.log("📤 Desktop user profile menu shown, checking positioning...")
+      console.log("📤 Menu classes:", menu.className)
+      console.log("📤 Menu computed styles:", window.getComputedStyle(menu))
+      console.log("📤 Menu position:", menu.getBoundingClientRect())
+      console.log("📤 Menu parent:", menu.parentElement)
+      console.log("📤 Button position:", button.getBoundingClientRect())
+      console.log("📤 Button parent:", button.parentElement)
     }
   }
 
-  hideUserProfileMenu() {
-    const menu = document.getElementById('user-profile-menu')
+  showMobileUserProfileMenu() {
+    const menu = document.getElementById('mobile-user-profile-menu')
+    const button = document.getElementById('mobile-user-profile-btn')
+    if (menu && button) {
+      menu.classList.remove('hidden')
+      console.log("📤 Mobile user profile menu shown, checking positioning...")
+      console.log("📤 Menu classes:", menu.className)
+      console.log("📤 Menu computed styles:", window.getComputedStyle(menu))
+      console.log("📤 Menu position:", menu.getBoundingClientRect())
+      console.log("📤 Menu parent:", menu.parentElement)
+      console.log("📤 Button position:", button.getBoundingClientRect())
+      console.log("📤 Button parent:", button.parentElement)
+    }
+  }
+
+  hideDesktopUserProfileMenu() {
+    const menu = document.getElementById('desktop-user-profile-menu')
+    if (menu) {
+      menu.classList.add('hidden')
+    }
+  }
+
+  hideMobileUserProfileMenu() {
+    const menu = document.getElementById('mobile-user-profile-menu')
     if (menu) {
       menu.classList.add('hidden')
     }
@@ -583,8 +657,10 @@ export default class extends Controller {
   toggleDesktopChatActionsMenu() {
     console.log("🔄 Toggle desktop chat actions menu called")
     const menu = document.getElementById('desktop-chat-actions-menu')
+    const button = document.getElementById('desktop-chat-actions-btn')
     console.log("🔍 Desktop menu element found:", menu)
-    if (menu) {
+    console.log("🔍 Desktop button element found:", button)
+    if (menu && button) {
       const isHidden = menu.classList.contains('hidden')
       console.log("🔍 Desktop menu is hidden:", isHidden)
       if (isHidden) {
@@ -595,7 +671,9 @@ export default class extends Controller {
         this.hideDesktopChatActionsMenu()
       }
     } else {
-      console.log("❌ Desktop menu element not found!")
+      console.log("❌ Desktop menu or button element not found!")
+      console.log("❌ Menu:", menu)
+      console.log("❌ Button:", button)
     }
   }
 
@@ -621,6 +699,9 @@ export default class extends Controller {
   showDesktopChatActionsMenu() {
     const menu = document.getElementById('desktop-chat-actions-menu')
     const button = document.getElementById('desktop-chat-actions-btn')
+    const container = document.getElementById('chat-actions-container')
+    console.log("📤 Container element found:", container)
+    console.log("📤 Container hidden:", container?.classList.contains('hidden'))
     if (menu && button) {
       menu.classList.remove('hidden')
       menu.style.display = 'block'
