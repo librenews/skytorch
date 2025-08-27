@@ -1,7 +1,6 @@
 class DashboardController < ApplicationController
   def index
     @providers = current_user.using_global_provider? ? Provider.global : current_user.providers
-    @chats = current_user.chats.active.order(updated_at: :desc).limit(10)
   end
 
   def connection_status

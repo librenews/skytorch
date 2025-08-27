@@ -2,15 +2,22 @@
 # development, test). The code here should be idempotent so that it can be executed at any point in every environment.
 # The data can then be loaded with the bin/rails db:seed command (or created alongside the database with db:setup).
 
-# Create a sample chat for testing
-if Chat.count.zero?
-  chat = Chat.create!(title: "Welcome to SkyTorch")
+# Create a sample user for testing
+if User.count.zero?
+  user = User.create!(
+    bluesky_handle: "test.user",
+    bluesky_did: "did:plc:testuser123",
+    display_name: "Test User"
+  )
+  
+  # Create a sample chat for testing
+  chat = user.chats.create!(title: "Welcome to SkyTorch")
   
   # Add some initial messages
   chat.messages.create!([
-    { content: "Hello! I'm your AI assistant. I can help you with various tasks using MCP tools.", role: "assistant" },
+    { content: "Hello! I'm your AI assistant. I can help you with various tasks.", role: "assistant" },
     { content: "What can you help me with?", role: "user" },
-    { content: "I can help you with:\n\n• Getting information about chats\n• Creating test messages\n• And much more through MCP tools!\n\nJust ask me what you'd like to do.", role: "assistant" }
+    { content: "I can help you with:\n\n• Getting information about chats\n• Creating test messages\n• And much more!\n\nJust ask me what you'd like to do.", role: "assistant" }
   ])
 end
 
