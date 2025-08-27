@@ -4,11 +4,14 @@ class Chat < ApplicationRecord
   
   validates :title, presence: true
   validates :user, presence: true
+  validates :status, presence: true, inclusion: { in: %w[active archived reported] }
   
-  enum :status, { active: 'active', archived: 'archived', reported: 'reported' }
+  enum :status, { active: 'active', archived: 'archived', reported: 'reported' }, default: 'active'
   
   scope :recent, -> { order(updated_at: :desc) }
   scope :active, -> { where(status: :active) }
+  scope :archived, -> { where(status: :archived) }
+  scope :reported, -> { where(status: :reported) }
   
   def message_count
     messages.count

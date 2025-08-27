@@ -43,22 +43,23 @@ class User < ApplicationRecord
       bluesky_handle: profile_data[:handle] || bluesky_did,
       display_name: profile_data[:display_name] || bluesky_handle,
       avatar_url: profile_data[:avatar_url],
-      description: profile_data[:description],
-      followers_count: profile_data[:followers_count],
-      following_count: profile_data[:following_count],
-      posts_count: profile_data[:posts_count],
-      indexed_at: profile_data[:indexed_at],
       profile_cache: profile_data,
       profile_updated_at: Time.current
     )
   rescue => e
     Rails.logger.error "Failed to update user profile: #{e.message}"
     # Fallback to basic info if profile update fails
-    update!(
-      bluesky_handle: bluesky_did,
-      display_name: bluesky_handle,
-      profile_updated_at: Time.current
-    )
+    # Only update fields that won't cause validation errors
+    begin
+      update!(
+        display_name: bluesky_handle,
+        profile_updated_at: Time.current
+      )
+    rescue => e2
+      Rails.logger.error "Fallback update also failed: #{e2.message}"
+      # Last resort: just update the timestamp
+      update_column(:profile_updated_at, Time.current)
+    end
   end
 
   def self.find_or_create_from_omniauth(auth_hash)

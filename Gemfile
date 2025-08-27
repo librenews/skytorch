@@ -86,6 +86,15 @@ group :development do
 end
 
 group :test do
+  # RSpec testing framework
+  gem "rspec-rails"
+  gem "factory_bot_rails"
+  gem "faker"
+  gem "shoulda-matchers"
+  gem "database_cleaner-active_record"
+  gem "vcr"
+  gem "webmock"
+  
   # Use system testing [https://guides.rubyonrails.org/testing.html#system-testing]
   gem "capybara"
   gem "selenium-webdriver"
