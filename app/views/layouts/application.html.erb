@@ -246,7 +246,7 @@
                 opacity: 0;
                 pointer-events: none;
                 transition: opacity 0.2s;
-                z-index: 50;
+                z-index: 9999;
                 margin-left: 0.75rem;
               }
               
@@ -307,7 +307,7 @@
     <!-- Main Layout Container -->
     <div class="flex h-screen">
       <!-- Sidebar -->
-      <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-80 lg:w-80 bg-white border-r border-gray-200 transform -translate-x-full transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 lg:z-auto h-screen">
+      <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-80 lg:w-80 bg-white border-r border-gray-200 transform -translate-x-full transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 lg:z-30 h-screen">
         <!-- Desktop Sidebar Header -->
         <div class="hidden lg:block px-6 py-4 border-b border-gray-200">
           <div class="flex items-center justify-between">
@@ -351,7 +351,7 @@
       <div id="mobile-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden hidden"></div>
 
       <!-- Main Content Area -->
-      <main class="flex-1 flex flex-col lg:ml-0">
+      <main class="flex-1 flex flex-col lg:ml-0 pt-20">
         <!-- Desktop Header -->
         <header class="hidden lg:block">
           <%= render 'dashboard/chat_header' %>
@@ -441,8 +441,7 @@
             mainContent.style.marginLeft = '5.5rem';
           }
           if (chatHeader) {
-            chatHeader.style.width = 'calc(100vw - 5.5rem)';
-            chatHeader.style.marginLeft = '5.5rem';
+            chatHeader.style.left = '5.5rem'; // 88px = 5.5rem
           }
           
           // Enable tooltip when sidebar is collapsed
@@ -467,8 +466,7 @@
             mainContent.style.marginLeft = '0';
           }
           if (chatHeader) {
-            chatHeader.style.width = '100%';
-            chatHeader.style.marginLeft = '0';
+            chatHeader.style.left = '0';
           }
         }
         
@@ -492,8 +490,7 @@
             mainContent.style.marginLeft = '0';
           }
           if (chatHeader) {
-            chatHeader.style.width = 'calc(100vw - 20rem)';
-            chatHeader.style.marginLeft = '0';
+            chatHeader.style.left = '20rem'; // 320px = 20rem
           }
           
           // Disable tooltip when sidebar is expanded
