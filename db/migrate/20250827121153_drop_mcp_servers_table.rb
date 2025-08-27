@@ -1,6 +1,6 @@
 class DropMcpServersTable < ActiveRecord::Migration[8.0]
   def up
-    drop_table :mcp_servers
+    drop_table :mcp_servers if table_exists?(:mcp_servers)
   end
 
   def down

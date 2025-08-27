@@ -12,21 +12,35 @@ class MessagesController < ApplicationController
       end
       
       # Use ChatService to process the message with LLM and MCP
-      chat_service = ChatService.new(@chat)
-      result = chat_service.send_message(@message.content)
+      chat_service = ChatService.new(current_user.default_provider)
+      result = chat_service.generate_response(@chat, @message.content)
       
       respond_to do |format|
         format.html { redirect_to @chat, notice: 'Message sent successfully.' }
-        format.json { render json: { 
-          success: true, 
-          assistant_message: { 
-            id: result[:message].id, 
-            role: result[:message].role, 
-            content: result[:message].content, 
-            created_at: result[:message].created_at 
-          },
-          rate_limits: result[:rate_limits]
-        }}
+        format.json { 
+          if result[:error]
+            render json: { 
+              success: false, 
+              system_message: { 
+                id: result[:message].id, 
+                role: result[:message].role, 
+                content: result[:message].content, 
+                created_at: result[:message].created_at 
+              }
+            }
+          else
+            render json: { 
+              success: true, 
+              assistant_message: { 
+                id: result[:message].id, 
+                role: result[:message].role, 
+                content: result[:message].content, 
+                created_at: result[:message].created_at 
+              },
+              rate_limits: result[:rate_limits]
+            }
+          end
+        }
       end
     else
       respond_to do |format|

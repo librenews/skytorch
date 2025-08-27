@@ -12,7 +12,7 @@ class AddUserReferencesToExistingTables < ActiveRecord::Migration[8.0]
     add_reference :chats, :user, null: false, foreign_key: true, default: admin_user.id
     
     # Update existing chats to belong to admin user
-    Chat.update_all(user_id: admin_user.id)
+    execute "UPDATE chats SET user_id = #{admin_user.id}"
     
     # Remove the default constraint
     change_column_default :chats, :user_id, nil
@@ -21,7 +21,7 @@ class AddUserReferencesToExistingTables < ActiveRecord::Migration[8.0]
     add_reference :llm_providers, :user, null: true, foreign_key: true
     
     # Set existing providers to global (user_id: nil)
-    LlmProvider.update_all(user_id: nil)
+    execute "UPDATE llm_providers SET user_id = NULL"
   end
 
   def down

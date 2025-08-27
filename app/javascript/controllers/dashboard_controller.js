@@ -438,13 +438,31 @@ export default class extends Controller {
     messageElement.className = 'flex space-x-4 mb-4'
     
     const isUser = message.role === 'user'
-    const alignment = isUser ? 'justify-end' : 'justify-start'
-    const bgColor = isUser ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-900'
+    const isSystem = message.role === 'system'
+    
+    let alignment, bgColor, icon
+    
+    if (isUser) {
+      alignment = 'justify-end'
+      bgColor = 'bg-blue-600 text-white'
+      icon = ''
+    } else if (isSystem) {
+      alignment = 'justify-center'
+      bgColor = 'bg-amber-50 border border-amber-200 text-amber-800'
+      icon = '<svg class="w-4 h-4 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>'
+    } else {
+      alignment = 'justify-start'
+      bgColor = 'bg-gray-100 text-gray-900'
+      icon = ''
+    }
     
     messageElement.innerHTML = `
       <div class="flex ${alignment} w-full">
         <div class="max-w-3xl ${bgColor} rounded-lg px-4 py-3">
-          <div class="whitespace-pre-wrap">${message.content}</div>
+          <div class="flex items-center">
+            ${icon}
+            <div class="whitespace-pre-wrap">${message.content}</div>
+          </div>
         </div>
       </div>
     `
@@ -536,11 +554,46 @@ export default class extends Controller {
           // Update provider usage from the response data
           console.log('Updating usage from message response...')
           this.updateUsageFromResult(result)
+        } else if (result.system_message) {
+          // Hide thinking indicator
+          this.hideThinkingIndicator()
+          
+          this.addMessage(result.system_message)
+          this.scrollToBottom()
+          
+          // Update the chat list to reflect the new message count
+          await this.updateChatList()
+        } else {
+          // Hide thinking indicator if no message received
+          this.hideThinkingIndicator()
+          console.error('No message in response:', result)
+          this.addSystemMessage('⚠️ Unable to generate a response. Please try again.')
         }
+      } else {
+        // Hide thinking indicator on HTTP error
+        this.hideThinkingIndicator()
+        console.error('HTTP error sending message:', response.status, response.statusText)
+        
+        // Add system message for HTTP errors
+        let errorMessage = '⚠️ Unable to send message. Please try again.'
+        if (response.status === 500) {
+          errorMessage = '⚠️ Server error occurred. Please try again later.'
+        } else if (response.status === 503) {
+          errorMessage = '⚠️ Service temporarily unavailable. Please try again later.'
+        } else if (response.status === 429) {
+          errorMessage = '⚠️ Rate limit exceeded. Please wait a moment before trying again.'
+        }
+        this.addSystemMessage(errorMessage)
       }
     } catch (error) {
       console.error('Error sending message:', error)
       // Hide thinking indicator on error
+      this.hideThinkingIndicator()
+      
+      // Add system message for network/connection errors
+      this.addSystemMessage('⚠️ Connection error. Please check your internet connection and try again.')
+    } finally {
+      // Always hide thinking indicator as a safeguard
       this.hideThinkingIndicator()
     }
   }
@@ -936,6 +989,15 @@ export default class extends Controller {
     if (thinkingElement) {
       thinkingElement.remove()
     }
+  }
+  
+  addSystemMessage(content) {
+    const systemMessage = {
+      role: 'system',
+      content: content
+    }
+    this.addMessage(systemMessage)
+    this.scrollToBottom()
   }
   
   async updateChatList() {

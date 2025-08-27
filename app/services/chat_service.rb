@@ -12,50 +12,65 @@ class ChatService
     # 2. Send the message to the LLM provider
     # 3. Return the response with usage data
     
-    messages = chat.messages.order(:created_at)
-    
-    # Simple mock response for now
-    response_content = case @provider.provider_type
-    when 'openai'
-      "I'm an OpenAI-powered assistant. You said: '#{user_message}'. How can I help you further?"
-    when 'anthropic'
-      "I'm a Claude-powered assistant. You said: '#{user_message}'. How can I help you further?"
-    when 'google'
-      "I'm a Google Gemini-powered assistant. You said: '#{user_message}'. How can I help you further?"
-    when 'mock'
-      "I'm a mock assistant. You said: '#{user_message}'. This is a test response."
-    else
-      "I'm an AI assistant. You said: '#{user_message}'. How can I help you further?"
-    end
-    
-    # Mock usage data
-    mock_response = {
-      'content' => response_content,
-      'usage' => {
-        'prompt_tokens' => user_message.length / 4 + 50, # Rough estimate
-        'completion_tokens' => response_content.length / 4,
-        'total_tokens' => (user_message.length + response_content.length) / 4 + 50
+    begin
+      messages = chat.messages.order(:created_at)
+      
+      # Simple mock response for now
+      response_content = case @provider.provider_type
+      when 'openai'
+        "I'm an OpenAI-powered assistant. You said: '#{user_message}'. How can I help you further?"
+      when 'anthropic'
+        "I'm a Claude-powered assistant. You said: '#{user_message}'. How can I help you further?"
+      when 'google'
+        "I'm a Google Gemini-powered assistant. You said: '#{user_message}'. How can I help you further?"
+      when 'mock'
+        "I'm a mock assistant. You said: '#{user_message}'. This is a test response."
+      else
+        "I'm an AI assistant. You said: '#{user_message}'. How can I help you further?"
+      end
+      
+      # Mock usage data
+      mock_response = {
+        'content' => response_content,
+        'usage' => {
+          'prompt_tokens' => user_message.length / 4 + 50, # Rough estimate
+          'completion_tokens' => response_content.length / 4,
+          'total_tokens' => (user_message.length + response_content.length) / 4 + 50
+        }
       }
-    }
-    
-    # Extract usage data using the service
-    usage_data = UsageTrackerService.extract_usage(@provider.provider_type, mock_response)
-    
-    # Create the assistant message with usage data
-    assistant_message = chat.messages.create!(
-      content: response_content,
-      role: 'assistant',
-      prompt_tokens: usage_data.prompt_tokens,
-      completion_tokens: usage_data.completion_tokens,
-      total_tokens: usage_data.total_tokens,
-      usage_data: usage_data.raw_data
-    )
-    
-    {
-      message: assistant_message,
-      usage: usage_data,
-      cost: UsageTrackerService.calculate_cost(usage_data, @provider.provider_type, @provider.default_model)
-    }
+      
+      # Extract usage data using the service
+      usage_data = UsageTrackerService.extract_usage(@provider.provider_type, mock_response)
+      
+      # Create the assistant message with usage data
+      assistant_message = chat.messages.create!(
+        content: response_content,
+        role: 'assistant',
+        prompt_tokens: usage_data.prompt_tokens,
+        completion_tokens: usage_data.completion_tokens,
+        total_tokens: usage_data.total_tokens,
+        usage_data: usage_data.raw_data
+      )
+      
+      {
+        message: assistant_message,
+        usage: usage_data,
+        cost: UsageTrackerService.calculate_cost(usage_data, @provider.provider_type, @provider.default_model)
+      }
+    rescue => e
+      Rails.logger.error "Error generating response: #{e.message}"
+      
+      # Create a system message for the error
+      system_message = chat.messages.create!(
+        content: "⚠️ Unable to generate a response at this time. Please try again later.",
+        role: 'system'
+      )
+      
+      {
+        message: system_message,
+        error: true
+      }
+    end
   end
 
   def generate_title(chat)

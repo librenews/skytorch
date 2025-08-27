@@ -5,7 +5,7 @@ FactoryBot.define do
     sequence(:display_name) { |n| "User #{n}" }
     avatar_url { "https://api.dicebear.com/7.x/avataaars/svg?seed=#{bluesky_handle}" }
     is_admin { false }
-    profile_cache { {} }
+    description { "User description" }
     profile_updated_at { Time.current }
 
     trait :with_providers do

@@ -21,6 +21,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_27_133610) do
     t.bigint "user_id", null: false
     t.string "status"
     t.index ["status"], name: "index_chats_on_status"
+    t.index ["user_id"], name: "index_chats_on_user_id"
   end
 
   create_table "messages", force: :cascade do |t|
@@ -51,25 +52,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_27_133610) do
     t.index ["user_id"], name: "index_providers_on_user_id"
   end
 
-  create_table "tools", force: :cascade do |t|
-    t.bigint "user_id", null: false
-    t.string "name", null: false
-    t.text "description"
-    t.string "tool_type", null: false
-    t.string "visibility", default: "private"
-    t.text "tags", default: [], array: true
-    t.jsonb "definition", default: {}, null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["definition"], name: "index_tools_on_definition", using: :gin
-    t.index ["tags"], name: "index_tools_on_tags", using: :gin
-    t.index ["tool_type", "visibility"], name: "index_tools_on_tool_type_and_visibility"
-    t.index ["tool_type"], name: "index_tools_on_tool_type"
-    t.index ["user_id", "visibility"], name: "index_tools_on_user_id_and_visibility"
-    t.index ["user_id"], name: "index_tools_on_user_id"
-    t.index ["visibility"], name: "index_tools_on_visibility"
-  end
-
   create_table "users", force: :cascade do |t|
     t.string "bluesky_did"
     t.string "bluesky_handle"
@@ -78,12 +60,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_27_133610) do
     t.boolean "is_admin"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.jsonb "profile_cache"
+    t.text "description"
     t.datetime "profile_updated_at"
   end
 
   add_foreign_key "chats", "users"
   add_foreign_key "messages", "chats"
   add_foreign_key "providers", "users"
-  add_foreign_key "tools", "users"
 end

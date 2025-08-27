@@ -218,7 +218,7 @@ RSpec.describe User, type: :model do
       expect(user.bluesky_handle).to eq('updated.user')
       expect(user.display_name).to eq('Updated User')
       expect(user.avatar_url).to eq('https://example.com/new-avatar.jpg')
-      expect(user.profile_cache).to eq(profile_data.stringify_keys)
+      expect(JSON.parse(user.description)).to eq(profile_data.stringify_keys)
       expect(user.profile_updated_at).to be_present
     end
 

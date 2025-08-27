@@ -43,7 +43,7 @@ class User < ApplicationRecord
       bluesky_handle: profile_data[:handle] || bluesky_did,
       display_name: profile_data[:display_name] || bluesky_handle,
       avatar_url: profile_data[:avatar_url],
-      profile_cache: profile_data,
+      description: profile_data.to_json,
       profile_updated_at: Time.current
     )
   rescue => e
