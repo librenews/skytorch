@@ -14,15 +14,6 @@ if Chat.count.zero?
   ])
 end
 
-# Create a sample MCP server record
-if McpServer.count.zero?
-  McpServer.create!(
-    name: "SkyTorch MCP Server",
-    url: "http://localhost:3000/mcp",
-    description: "The main MCP server for this application"
-  )
-end
-
 # Create OpenAI provider (API key should be set via environment variables)
 if LlmProvider.count.zero?
   # Only create provider if API key is available

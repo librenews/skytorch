@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_26_122805) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_27_121153) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -19,7 +19,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_26_122805) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
-    t.integer "status", default: 0, null: false
+    t.string "status"
     t.index ["status"], name: "index_chats_on_status"
   end
 
@@ -34,14 +34,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_26_122805) do
     t.datetime "updated_at", null: false
     t.bigint "user_id"
     t.index ["user_id"], name: "index_llm_providers_on_user_id"
-  end
-
-  create_table "mcp_servers", force: :cascade do |t|
-    t.string "name"
-    t.string "url"
-    t.text "description"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
   end
 
   create_table "messages", force: :cascade do |t|

@@ -28,9 +28,6 @@ Rails.application.routes.draw do
   resources :llm_providers, only: [:index, :create, :update, :destroy]
   post "llm_providers/:id/set_default", to: "llm_providers#set_default", as: :set_default_llm_provider
   
-  # MCP server endpoint
-  post "mcp", to: "mcp#handle"
-  
   # Root route
   root "login#index"
   

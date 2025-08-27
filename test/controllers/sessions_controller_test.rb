@@ -1,7 +1,6 @@
 require "test_helper"
 
 class SessionsControllerTest < ActionDispatch::IntegrationTest
-  include Minitest::Mock
   def setup
     @user = users(:one)
     @profile_data = {
