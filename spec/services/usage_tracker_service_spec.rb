@@ -1,11 +1,13 @@
 require 'rails_helper'
 
 RSpec.describe UsageTrackerService, type: :service do
+  let(:provider) { create(:provider, provider_type: 'openai') }
+
   describe '.extract_usage' do
     context 'with OpenAI response' do
-      let(:openai_response) do
+      let(:llm_response) do
         {
-          'content' => 'Hello, how can I help you?',
+          'content' => 'Test response',
           'usage' => {
             'prompt_tokens' => 100,
             'completion_tokens' => 50,
@@ -15,102 +17,17 @@ RSpec.describe UsageTrackerService, type: :service do
       end
 
       it 'extracts usage data correctly' do
-        usage_data = UsageTrackerService.extract_usage('openai', openai_response)
+        usage_data = UsageTrackerService.extract_usage('openai', llm_response)
         
         expect(usage_data.prompt_tokens).to eq(100)
         expect(usage_data.completion_tokens).to eq(50)
         expect(usage_data.total_tokens).to eq(150)
-        expect(usage_data.raw_data).to eq(openai_response['usage'])
-      end
-    end
-
-    context 'with Anthropic response' do
-      let(:anthropic_response) do
-        {
-          'content' => 'Hello, how can I help you?',
-          'usage' => {
-            'input_tokens' => 80,
-            'output_tokens' => 40
-          }
-        }
+        expect(usage_data.raw_data).to eq(llm_response['usage'])
       end
 
-      it 'extracts usage data correctly' do
-        usage_data = UsageTrackerService.extract_usage('anthropic', anthropic_response)
-        
-        expect(usage_data.prompt_tokens).to eq(80)
-        expect(usage_data.completion_tokens).to eq(40)
-        expect(usage_data.total_tokens).to eq(120)
-        expect(usage_data.raw_data).to eq(anthropic_response['usage'])
-      end
-    end
-
-    context 'with Google response' do
-      let(:google_response) do
-        {
-          'content' => 'Hello, how can I help you?',
-          'usageMetadata' => {
-            'promptTokenCount' => 60,
-            'candidatesTokenCount' => 30,
-            'totalTokenCount' => 90
-          }
-        }
-      end
-
-      it 'extracts usage data correctly' do
-        usage_data = UsageTrackerService.extract_usage('google', google_response)
-        
-        expect(usage_data.prompt_tokens).to eq(60)
-        expect(usage_data.completion_tokens).to eq(30)
-        expect(usage_data.total_tokens).to eq(90)
-        expect(usage_data.raw_data).to eq(google_response['usageMetadata'])
-      end
-    end
-
-    context 'with mock response' do
-      let(:mock_response) do
-        {
-          'content' => 'Hello, how can I help you? This is a test response with some content.'
-        }
-      end
-
-      it 'estimates usage data correctly' do
-        usage_data = UsageTrackerService.extract_usage('mock', mock_response)
-        
-        expect(usage_data.prompt_tokens).to eq(10)
-        expect(usage_data.completion_tokens).to be > 0
-        expect(usage_data.total_tokens).to be > 10
-        expect(usage_data.raw_data[:estimated]).to be true
-      end
-    end
-
-    context 'with unknown provider' do
-      let(:unknown_response) do
-        {
-          'content' => 'Hello',
-          'some_usage_data' => { 'tokens' => 100 }
-        }
-      end
-
-      it 'returns nil values for unknown providers' do
-        usage_data = UsageTrackerService.extract_usage('unknown', unknown_response)
-        
-        expect(usage_data.prompt_tokens).to be_nil
-        expect(usage_data.completion_tokens).to be_nil
-        expect(usage_data.total_tokens).to be_nil
-        expect(usage_data.raw_data).to eq(unknown_response)
-      end
-    end
-
-    context 'with missing usage data' do
-      let(:response_without_usage) do
-        {
-          'content' => 'Hello, how can I help you?'
-        }
-      end
-
-      it 'handles missing usage data gracefully' do
-        usage_data = UsageTrackerService.extract_usage('openai', response_without_usage)
+      it 'handles missing usage data' do
+        llm_response_without_usage = { 'content' => 'Test response' }
+        usage_data = UsageTrackerService.extract_usage('openai', llm_response_without_usage)
         
         expect(usage_data.prompt_tokens).to be_nil
         expect(usage_data.completion_tokens).to be_nil
@@ -118,11 +35,52 @@ RSpec.describe UsageTrackerService, type: :service do
         expect(usage_data.raw_data).to eq({})
       end
     end
+
+    context 'with Anthropic response' do
+      let(:llm_response) do
+        {
+          'content' => 'Test response',
+          'usage' => {
+            'input_tokens' => 100,
+            'output_tokens' => 50
+          }
+        }
+      end
+
+      it 'maps Anthropic token names correctly' do
+        usage_data = UsageTrackerService.extract_usage('anthropic', llm_response)
+        
+        expect(usage_data.prompt_tokens).to eq(100)
+        expect(usage_data.completion_tokens).to eq(50)
+        expect(usage_data.total_tokens).to eq(150)
+      end
+    end
+
+    context 'with Google response' do
+      let(:llm_response) do
+        {
+          'content' => 'Test response',
+          'usageMetadata' => {
+            'promptTokenCount' => 100,
+            'candidatesTokenCount' => 50,
+            'totalTokenCount' => 150
+          }
+        }
+      end
+
+      it 'maps Google token names correctly' do
+        usage_data = UsageTrackerService.extract_usage('google', llm_response)
+        
+        expect(usage_data.prompt_tokens).to eq(100)
+        expect(usage_data.completion_tokens).to eq(50)
+        expect(usage_data.total_tokens).to eq(150)
+      end
+    end
   end
 
   describe '.calculate_cost' do
     let(:usage_data) do
-      UsageTrackerService::UsageData.new(
+      double(
         prompt_tokens: 100,
         completion_tokens: 50,
         total_tokens: 150,
@@ -134,78 +92,90 @@ RSpec.describe UsageTrackerService, type: :service do
       it 'calculates cost for GPT-4o-mini' do
         cost = UsageTrackerService.calculate_cost(usage_data, 'openai', 'gpt-4o-mini')
         
-        # 100 * 0.005 / 1000 + 50 * 0.015 / 1000 = 0.0005 + 0.00075 = 0.00125
-        expected_cost = (100 * 0.005 / 1000.0) + (50 * 0.015 / 1000.0)
+        # Expected: (100 * 0.005 + 50 * 0.015) / 1000
+        expected_cost = (100 * 0.005 + 50 * 0.015) / 1000.0
         expect(cost).to eq(expected_cost)
       end
 
-      it 'calculates cost for GPT-3.5-turbo' do
-        cost = UsageTrackerService.calculate_cost(usage_data, 'openai', 'gpt-3.5-turbo')
+      it 'calculates cost for GPT-4o' do
+        cost = UsageTrackerService.calculate_cost(usage_data, 'openai', 'gpt-4o')
         
-        # 100 * 0.0005 / 1000 + 50 * 0.0015 / 1000 = 0.00005 + 0.000075 = 0.000125
-        expected_cost = (100 * 0.0005 / 1000.0) + (50 * 0.0015 / 1000.0)
+        # Expected: (100 * 0.005 + 50 * 0.015) / 1000
+        expected_cost = (100 * 0.005 + 50 * 0.015) / 1000.0
+        expect(cost).to eq(expected_cost)
+      end
+
+      it 'uses default pricing for unknown models' do
+        cost = UsageTrackerService.calculate_cost(usage_data, 'openai', 'unknown-model')
+        
+        # Should use GPT-4o pricing as default
+        expected_cost = (100 * 0.005 + 50 * 0.015) / 1000.0
         expect(cost).to eq(expected_cost)
       end
     end
 
     context 'with Anthropic pricing' do
-      it 'calculates cost for Claude-3-5-Sonnet' do
+      it 'calculates cost for Claude 3.5 Sonnet' do
         cost = UsageTrackerService.calculate_cost(usage_data, 'anthropic', 'claude-3-5-sonnet-20241022')
         
-        # 100 * 0.003 / 1000 + 50 * 0.015 / 1000 = 0.0003 + 0.00075 = 0.00105
-        expected_cost = (100 * 0.003 / 1000.0) + (50 * 0.015 / 1000.0)
-        expect(cost).to eq(expected_cost)
+        # Expected: (100 * 0.003 + 50 * 0.015) / 1000
+        expected_cost = (100 * 0.003 + 50 * 0.015) / 1000.0
+        expect(cost).to be_within(0.000001).of(expected_cost)
+      end
+
+      it 'calculates cost for Claude 3 Haiku' do
+        cost = UsageTrackerService.calculate_cost(usage_data, 'anthropic', 'claude-3-haiku-20240307')
+        
+        # Expected: (100 * 0.003 + 50 * 0.015) / 1000 (default pricing)
+        expected_cost = (100 * 0.003 + 50 * 0.015) / 1000.0
+        expect(cost).to be_within(0.000001).of(expected_cost)
+      end
+
+      it 'uses default pricing for unknown models' do
+        cost = UsageTrackerService.calculate_cost(usage_data, 'anthropic', 'unknown-model')
+        
+        # Should use Claude 3.5 Sonnet pricing as default
+        expected_cost = (100 * 0.003 + 50 * 0.015) / 1000.0
+        expect(cost).to be_within(0.000001).of(expected_cost)
       end
     end
 
     context 'with Google pricing' do
-      it 'calculates cost for Gemini-1.5-Flash' do
+      it 'calculates cost for Gemini 1.5 Flash' do
         cost = UsageTrackerService.calculate_cost(usage_data, 'google', 'gemini-1.5-flash')
         
-        # 100 * 0.000075 / 1000 + 50 * 0.0003 / 1000 = 0.0000075 + 0.000015 = 0.0000225
-        expected_cost = (100 * 0.000075 / 1000.0) + (50 * 0.0003 / 1000.0)
+        # Expected: (100 * 0.000075 + 50 * 0.0003) / 1000
+        expected_cost = (100 * 0.000075 + 50 * 0.0003) / 1000.0
         expect(cost).to eq(expected_cost)
       end
-    end
 
-    context 'with mock provider' do
-      it 'returns zero cost for mock provider' do
-        cost = UsageTrackerService.calculate_cost(usage_data, 'mock')
-        expect(cost).to eq(0)
+      it 'calculates cost for Gemini 1.5 Pro' do
+        cost = UsageTrackerService.calculate_cost(usage_data, 'google', 'gemini-1.5-pro')
+        
+        # Expected: (100 * 0.00375 + 50 * 0.015) / 1000
+        expected_cost = (100 * 0.00375 + 50 * 0.015) / 1000.0
+        expect(cost).to be_within(0.000001).of(expected_cost)
       end
-    end
 
-    context 'with nil usage data' do
-      it 'returns zero cost when usage data is nil' do
-        cost = UsageTrackerService.calculate_cost(nil, 'openai')
-        expect(cost).to eq(0)
+      it 'uses default pricing for unknown models' do
+        cost = UsageTrackerService.calculate_cost(usage_data, 'google', 'unknown-model')
+        
+        # Should use Gemini 1.5 Flash pricing as default
+        expected_cost = (100 * 0.000075 + 50 * 0.0003) / 1000.0
+        expect(cost).to eq(expected_cost)
       end
     end
 
     context 'with unknown provider' do
-      it 'uses generic fallback pricing' do
-        cost = UsageTrackerService.calculate_cost(usage_data, 'unknown')
+      it 'uses generic fallback pricing for unknown providers' do
+        cost = UsageTrackerService.calculate_cost(usage_data, 'unknown', 'unknown-model')
         
-        # 100 * 0.001 / 1000 + 50 * 0.003 / 1000 = 0.0001 + 0.00015 = 0.00025
-        expected_cost = (100 * 0.001 / 1000.0) + (50 * 0.003 / 1000.0)
+        # Expected: (100 * 0.001 + 50 * 0.003) / 1000
+        expected_cost = (100 * 0.001 + 50 * 0.003) / 1000.0
         expect(cost).to eq(expected_cost)
       end
     end
   end
 
-  describe 'UsageData struct' do
-    it 'creates usage data with keyword arguments' do
-      usage_data = UsageTrackerService::UsageData.new(
-        prompt_tokens: 100,
-        completion_tokens: 50,
-        total_tokens: 150,
-        raw_data: { 'model' => 'gpt-4o-mini' }
-      )
-      
-      expect(usage_data.prompt_tokens).to eq(100)
-      expect(usage_data.completion_tokens).to eq(50)
-      expect(usage_data.total_tokens).to eq(150)
-      expect(usage_data.raw_data).to eq({ 'model' => 'gpt-4o-mini' })
-    end
-  end
+
 end

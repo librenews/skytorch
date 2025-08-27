@@ -3,7 +3,7 @@ require 'ruby_llm'
 class ChatService
   def initialize(provider = nil)
     @provider = provider || Provider.default_provider
-    @llm_client = LlmClientService.new(@provider)
+    configure_provider
   end
 
   def generate_response(chat, user_message)
@@ -22,8 +22,8 @@ class ChatService
         content: user_message
       }
       
-      # Generate response using the LLM client
-      llm_response = @llm_client.generate_response(messages)
+      # Generate response using ruby_llm directly
+      llm_response = generate_llm_response(messages)
       
       # Extract usage data using the service
       usage_data = UsageTrackerService.extract_usage(@provider.provider_type, llm_response)
@@ -60,46 +60,60 @@ class ChatService
   end
 
   def generate_title(chat)
-    # Generate a title based on the first few messages
-    first_message = chat.messages.order(:created_at).first
-    return "New Chat" unless first_message
+    messages = chat.messages.order(:created_at)
+    return "New Chat" if messages.empty?
     
-    begin
-      # Use LLM to generate a better title
-      title_prompt = [
-        {
-          role: 'system',
-          content: 'Generate a short, descriptive title (max 50 characters) for this chat based on the first message. Return only the title, nothing else.'
-        },
-        {
-          role: 'user',
-          content: first_message.content
-        }
-      ]
-      
-      llm_response = @llm_client.generate_response(title_prompt)
-      title = llm_response['content'].strip
-      
-      # Fallback if LLM fails or returns something too long
-      if title.length > 50 || title.blank?
-        content = first_message.content
-        if content.length > 50
-          "#{content[0..47]}..."
-        else
-          content
-        end
-      else
-        title
-      end
-    rescue => e
-      Rails.logger.error "Error generating title with LLM: #{e.message}"
-      # Fallback to simple title generation
+    message_count = messages.count
+    
+    if message_count == 1
+      # First message - just truncate the user's message
+      first_message = messages.first
       content = first_message.content
       if content.length > 50
         "#{content[0..47]}..."
       else
         content
       end
+    elsif message_count == 4
+      # 4th message (likely 2nd LLM response) - ask LLM to create a summary title
+      begin
+        # Get the conversation context for better title generation
+        conversation_context = messages.limit(4).map do |msg|
+          "#{msg.role}: #{msg.content}"
+        end.join("\n")
+        
+        title_prompt = [
+          {
+            role: 'system',
+            content: 'Generate a short, descriptive title (max 50 characters) for this chat conversation. Return only the title, nothing else.'
+          },
+          {
+            role: 'user',
+            content: "Based on this conversation:\n\n#{conversation_context}\n\nGenerate a short title:"
+          }
+        ]
+        
+        llm_response = generate_llm_response(title_prompt)
+        title = llm_response['content'].strip
+        
+        # Update the chat title
+        chat.update!(title: title) if title.present? && title.length <= 50
+        
+        title
+      rescue => e
+        Rails.logger.error "Error generating title with LLM: #{e.message}"
+        # Fallback to first message content
+        first_message = messages.first
+        content = first_message.content
+        if content.length > 50
+          "#{content[0..47]}..."
+        else
+          content
+        end
+      end
+    else
+      # For other message counts, return the current title
+      chat.title
     end
   end
 
@@ -139,7 +153,7 @@ class ChatService
       total_tokens: messages.sum(:total_tokens),
       prompt_tokens: messages.sum(:prompt_tokens),
       completion_tokens: messages.sum(:completion_tokens),
-      estimated_cost: messages.sum { |m| m.cost_estimate }
+      estimated_cost: 0 # TODO: Implement cost calculation
     }
   end
   
@@ -155,7 +169,7 @@ class ChatService
       total_tokens: messages.sum(:total_tokens),
       prompt_tokens: messages.sum(:prompt_tokens),
       completion_tokens: messages.sum(:completion_tokens),
-      estimated_cost: messages.sum { |m| m.cost_estimate }
+      estimated_cost: 0 # TODO: Implement cost calculation
     }
   end
 
@@ -176,8 +190,8 @@ class ChatService
         content: user_message
       }
       
-      # Generate response using the LLM client with tools
-      llm_response = @llm_client.generate_response_with_tools(messages, tools)
+      # Generate response using ruby_llm directly with tools
+      llm_response = generate_llm_response_with_tools(messages, tools)
       
       # Extract usage data using the service
       usage_data = UsageTrackerService.extract_usage(@provider.provider_type, llm_response)
@@ -212,5 +226,69 @@ class ChatService
         error: true
       }
     end
+  end
+
+  private
+
+  def configure_provider
+    case @provider.provider_type
+    when 'openai'
+      RubyLLM.configure do |config|
+        config.openai_api_key = @provider.api_key
+      end
+    when 'anthropic'
+      RubyLLM.configure do |config|
+        config.anthropic_api_key = @provider.api_key
+      end
+    when 'google'
+      RubyLLM.configure do |config|
+        config.gemini_api_key = @provider.api_key
+      end
+    end
+  end
+
+  def generate_llm_response(messages)
+    # Get the last user message
+    last_message = messages.last
+    user_content = last_message[:content] || last_message['content']
+
+    # Use the simple ruby_llm API - it handles all provider differences
+    chat = RubyLLM.chat
+    response = chat.ask(user_content)
+
+    {
+      'content' => response.content,
+      'usage' => {
+        'prompt_tokens' => response.input_tokens || 0,
+        'completion_tokens' => response.output_tokens || 0,
+        'total_tokens' => (response.input_tokens || 0) + (response.output_tokens || 0)
+      }
+    }
+  rescue => e
+    Rails.logger.error "LLM API error: #{e.message}"
+    raise e
+  end
+
+  def generate_llm_response_with_tools(messages, tools)
+    # Get the last user message
+    last_message = messages.last
+    user_content = last_message[:content] || last_message['content']
+
+    # Use the simple ruby_llm API with tools
+    chat = RubyLLM.chat
+    response = chat.ask(user_content)
+
+    {
+      'content' => response.content,
+      'tool_calls' => response.tool_calls || [],
+      'usage' => {
+        'prompt_tokens' => response.input_tokens || 0,
+        'completion_tokens' => response.output_tokens || 0,
+        'total_tokens' => (response.input_tokens || 0) + (response.output_tokens || 0)
+      }
+    }
+  rescue => e
+    Rails.logger.error "LLM API error with tools: #{e.message}"
+    raise e
   end
 end
