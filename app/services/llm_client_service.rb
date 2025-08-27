@@ -45,24 +45,14 @@ class LlmClientService
   def create_client
     case @provider.provider_type
     when 'openai'
-      RubyLLM::Client.new(
-        provider: :openai,
-        api_key: @provider.api_key,
-        model: @provider.default_model
-      )
+      ENV['OPENAI_API_KEY'] = @provider.api_key
+      RubyLLM::Chat.new.with_model(@provider.default_model)
     when 'anthropic'
-      RubyLLM::Client.new(
-        provider: :anthropic,
-        api_key: @provider.api_key,
-        model: @provider.default_model
-      )
+      ENV['ANTHROPIC_API_KEY'] = @provider.api_key
+      RubyLLM::Chat.new.with_model(@provider.default_model)
     when 'google'
-      RubyLLM::Client.new(
-        provider: :google,
-        api_key: @provider.api_key,
-        model: @provider.default_model,
-        base_url: @provider.base_url
-      )
+      ENV['GOOGLE_API_KEY'] = @provider.api_key
+      RubyLLM::Chat.new.with_model(@provider.default_model)
     when 'mock'
       # Mock client for testing
       nil
@@ -74,9 +64,8 @@ class LlmClientService
   def generate_openai_response(messages, model)
     return generate_mock_response(messages) unless @client
 
-    response = @client.chat(
+    response = @client.call(
       messages: format_messages_for_openai(messages),
-      model: model,
       temperature: 0.7,
       max_tokens: 1000
     )
@@ -97,9 +86,8 @@ class LlmClientService
   def generate_anthropic_response(messages, model)
     return generate_mock_response(messages) unless @client
 
-    response = @client.chat(
+    response = @client.call(
       messages: format_messages_for_anthropic(messages),
-      model: model,
       temperature: 0.7,
       max_tokens: 1000
     )
@@ -120,9 +108,8 @@ class LlmClientService
   def generate_google_response(messages, model)
     return generate_mock_response(messages) unless @client
 
-    response = @client.chat(
+    response = @client.call(
       messages: format_messages_for_google(messages),
-      model: model,
       temperature: 0.7,
       max_tokens: 1000
     )
@@ -143,10 +130,8 @@ class LlmClientService
   def generate_openai_response_with_tools(messages, tools, model)
     return generate_mock_response_with_tools(messages, tools) unless @client
 
-    response = @client.chat.with_tools(
+    response = @client.with_tools(tools).call(
       messages: format_messages_for_openai(messages),
-      tools: tools,
-      model: model,
       temperature: 0.7,
       max_tokens: 1000
     )
@@ -168,10 +153,8 @@ class LlmClientService
   def generate_anthropic_response_with_tools(messages, tools, model)
     return generate_mock_response_with_tools(messages, tools) unless @client
 
-    response = @client.chat.with_tools(
+    response = @client.with_tools(tools).call(
       messages: format_messages_for_anthropic(messages),
-      tools: tools,
-      model: model,
       temperature: 0.7,
       max_tokens: 1000
     )
@@ -193,10 +176,8 @@ class LlmClientService
   def generate_google_response_with_tools(messages, tools, model)
     return generate_mock_response_with_tools(messages, tools) unless @client
 
-    response = @client.chat.with_tools(
+    response = @client.with_tools(tools).call(
       messages: format_messages_for_google(messages),
-      tools: tools,
-      model: model,
       temperature: 0.7,
       max_tokens: 1000
     )
