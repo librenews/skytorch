@@ -1,0 +1,17 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  name: OpenAI
+  provider_type: openai
+  api_key: <%= Rails.application.credentials.openai_api_key || 'test_key' %>
+  default_model: gpt-4o-mini
+  is_active: true
+  user: one
+
+two:
+  name: Anthropic
+  provider_type: anthropic
+  api_key: <%= Rails.application.credentials.anthropic_api_key || 'test_key' %>
+  default_model: claude-3-5-sonnet-20241022
+  is_active: false
+  user: one

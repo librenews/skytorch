@@ -15,10 +15,10 @@ if Chat.count.zero?
 end
 
 # Create OpenAI provider (API key should be set via environment variables)
-if LlmProvider.count.zero?
+if Provider.count.zero?
   # Only create provider if API key is available
   if ENV['OPENAI_API_KEY'].present?
-    LlmProviderService.create_openai_provider(
+    ProviderService.create_openai_provider(
       ENV['OPENAI_API_KEY'],
       "gpt-4o-mini"
     )

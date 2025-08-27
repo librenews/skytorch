@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_27_121153) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_27_122107) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -23,7 +23,16 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_27_121153) do
     t.index ["status"], name: "index_chats_on_status"
   end
 
-  create_table "llm_providers", force: :cascade do |t|
+  create_table "messages", force: :cascade do |t|
+    t.bigint "chat_id", null: false
+    t.text "content"
+    t.string "role"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["chat_id"], name: "index_messages_on_chat_id"
+  end
+
+  create_table "providers", force: :cascade do |t|
     t.string "name"
     t.string "provider_type"
     t.string "api_key"
@@ -33,16 +42,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_27_121153) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id"
-    t.index ["user_id"], name: "index_llm_providers_on_user_id"
-  end
-
-  create_table "messages", force: :cascade do |t|
-    t.bigint "chat_id", null: false
-    t.text "content"
-    t.string "role"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["chat_id"], name: "index_messages_on_chat_id"
+    t.index ["user_id"], name: "index_providers_on_user_id"
   end
 
   create_table "tools", force: :cascade do |t|
@@ -77,7 +77,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_27_121153) do
   end
 
   add_foreign_key "chats", "users"
-  add_foreign_key "llm_providers", "users"
   add_foreign_key "messages", "chats"
+  add_foreign_key "providers", "users"
   add_foreign_key "tools", "users"
 end
