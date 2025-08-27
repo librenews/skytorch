@@ -2,19 +2,19 @@
 <nav class="p-4 space-y-2">
   <button id="new-chat-btn" class="w-full text-left p-3 rounded-lg hover:bg-gray-100 transition-colors group">
     <div class="flex items-center space-x-3">
-      <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+      <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center flex-shrink-0">
         <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
         </svg>
       </div>
-      <div class="flex-1 min-w-0">
+      <div class="flex-1 min-w-0 chat-navigation-content">
         <p class="text-sm font-medium text-gray-900">New Chat</p>
         <p class="text-xs text-gray-500">Start a new conversation</p>
       </div>
     </div>
   </button>
   
-  <div class="space-y-1">
+  <div class="space-y-1 chat-navigation-content">
     <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider px-2">Recent Chats</h3>
     <div id="chat-list-container" class="max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 force-scrollbar always-show-scrollbar" style="min-height: 200px;">
       <div id="chat-list" class="space-y-1" style="padding-bottom: 20px;">

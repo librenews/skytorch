@@ -4,18 +4,18 @@
     <button id="<%= mobile ? 'mobile-user-profile-btn' : 'desktop-user-profile-btn' %>" class="w-full text-left p-3 rounded-lg hover:bg-gray-100 transition-colors group">
       <div class="flex items-center space-x-3">
         <!-- User Avatar -->
-        <div class="flex-shrink-0">
+        <div class="flex-shrink-0 user-profile-photo">
           <% if current_user.avatar_url.present? %>
-            <img src="<%= current_user.avatar_url %>" alt="<%= current_user.display_name %>" class="w-10 h-10 rounded-full">
+            <img src="<%= current_user.avatar_url %>" alt="<%= current_user.display_name %>" class="w-10 h-10 rounded-full flex-shrink-0">
           <% else %>
-            <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
+            <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0">
               <%= current_user.display_name.first.upcase %>
             </div>
           <% end %>
         </div>
         
         <!-- User Info -->
-        <div class="flex-1 min-w-0">
+        <div class="flex-1 min-w-0 user-profile-content">
           <div class="flex items-center space-x-2">
             <p class="text-sm font-medium text-gray-900 truncate"><%= current_user.display_name %></p>
             <!-- Connection Status Indicator -->
@@ -34,7 +34,7 @@
         </div>
         
         <!-- Dropdown Arrow -->
-        <div class="flex-shrink-0">
+        <div class="flex-shrink-0 user-profile-content">
           <svg class="w-4 h-4 text-gray-400 group-hover:text-gray-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
           </svg>
@@ -43,7 +43,7 @@
     </button>
     
     <!-- Floating Menu -->
-    <div id="<%= mobile ? 'mobile-user-profile-menu' : 'desktop-user-profile-menu' %>" class="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-lg shadow-lg border border-gray-200 py-1 hidden z-10">
+    <div id="<%= mobile ? 'mobile-user-profile-menu' : 'desktop-user-profile-menu' %>" class="absolute bottom-full left-0 mb-2 bg-white rounded-lg shadow-lg border border-gray-200 py-1 hidden z-10" style="min-width: 200px;">
       <button id="settings-btn" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-3">
         <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>

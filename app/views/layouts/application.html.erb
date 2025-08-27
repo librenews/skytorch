@@ -91,6 +91,170 @@
               #chat-list-container::-webkit-scrollbar-thumb:hover {
                 background: #9ca3af;
               }
+              
+              /* Collapsed sidebar styles */
+              .sidebar-collapsed .sidebar-content {
+                display: none;
+              }
+              
+              .sidebar-collapsed .sidebar-header-content {
+                display: none;
+              }
+              
+              .sidebar-collapsed .chat-navigation-content {
+                display: none;
+              }
+              
+              .sidebar-collapsed .user-profile-content {
+                display: none;
+              }
+              
+              .sidebar-collapsed .user-profile-photo {
+                display: block;
+              }
+              
+              .sidebar-collapsed .user-profile-photo img,
+              .sidebar-collapsed .user-profile-photo div {
+                margin: 0 auto;
+              }
+              
+              /* Hide collapse button when collapsed */
+              .sidebar-collapsed #sidebar-collapse-btn {
+                display: none;
+              }
+              
+              /* Ensure icons are centered and aligned in collapsed state */
+              .sidebar-collapsed .sidebar-header .flex {
+                justify-content: center;
+              }
+              
+              .sidebar-collapsed .chat-navigation .flex {
+                justify-content: center;
+              }
+              
+              .sidebar-collapsed .user-profile .flex {
+                justify-content: center;
+              }
+              
+              /* Give write icon more room in collapsed state */
+              .sidebar-collapsed #new-chat-btn {
+                padding: 0.75rem;
+              }
+              
+              .sidebar-collapsed #new-chat-btn .w-10.h-10 {
+                width: 2.5rem;
+                height: 2.5rem;
+              }
+              
+              /* Remove hover effects in collapsed state */
+              .sidebar-collapsed #desktop-user-profile-btn:hover,
+              .sidebar-collapsed #mobile-user-profile-btn:hover,
+              .sidebar-collapsed #new-chat-btn:hover {
+                background-color: transparent;
+              }
+              
+              /* Ensure consistent vertical alignment */
+              .sidebar-header .flex,
+              .chat-navigation .flex,
+              .user-profile .flex {
+                align-items: center;
+              }
+              
+              /* Consistent spacing in both states */
+              .sidebar-header,
+              .chat-navigation,
+              .user-profile {
+                padding: 1rem;
+              }
+              
+              .sidebar-collapsed .sidebar-header,
+              .sidebar-collapsed .chat-navigation,
+              .sidebar-collapsed .user-profile {
+                padding: 0.75rem;
+              }
+              
+              /* Standardize all icon widths to ensure alignment */
+              .sidebar-header .w-10.h-10,
+              .chat-navigation .w-10.h-10,
+              .user-profile .w-10.h-10 {
+                width: 2.5rem;
+                height: 2.5rem;
+                flex-shrink: 0;
+              }
+              
+
+              
+              /* Adjust positioning for better alignment in collapsed state */
+              .sidebar-collapsed .sidebar-header .flex {
+                justify-content: center;
+              }
+              
+              .sidebar-collapsed .chat-navigation .flex {
+                justify-content: center;
+              }
+              
+              .sidebar-collapsed .user-profile .flex {
+                justify-content: center;
+              }
+              
+              /* Ensure all three sections are properly centered */
+              .sidebar-collapsed .sidebar-header,
+              .sidebar-collapsed .chat-navigation,
+              .sidebar-collapsed .user-profile {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+              }
+              
+              /* Align left edges of all icons */
+              .sidebar-collapsed .sidebar-header .flex,
+              .sidebar-collapsed .chat-navigation .flex,
+              .sidebar-collapsed .user-profile .flex {
+                justify-content: flex-start;
+                margin-left: 0.75rem;
+              }
+              
+              /* Reduce padding on write icon and profile in collapsed state */
+              .sidebar-collapsed #new-chat-btn {
+                padding: 0.5rem;
+              }
+              
+              .sidebar-collapsed #desktop-user-profile-btn,
+              .sidebar-collapsed #mobile-user-profile-btn {
+                padding: 0.5rem;
+              }
+              
+              /* No CSS adjustments - using JavaScript instead */
+              
+              /* Tooltip styles */
+              .tooltip {
+                position: relative;
+              }
+              
+              .tooltip::after {
+                content: ">> " attr(data-tooltip);
+                position: absolute;
+                top: 50%;
+                left: 100%;
+                transform: translateY(-50%);
+                background: #1f2937;
+                color: white;
+                padding: 0.5rem;
+                border-radius: 0.375rem;
+                font-size: 0.75rem;
+                white-space: nowrap;
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.2s;
+                z-index: 50;
+                margin-left: 0.75rem;
+              }
+              
+              .tooltip:hover::after {
+                opacity: 1;
+              }
+              
+
             </style>
     
     <script>
@@ -143,7 +307,7 @@
     <!-- Main Layout Container -->
     <div class="flex h-screen">
       <!-- Sidebar -->
-      <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-80 bg-white border-r border-gray-200 transform -translate-x-full transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 lg:z-auto h-screen">
+      <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-80 lg:w-80 bg-white border-r border-gray-200 transform -translate-x-full transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 lg:z-auto h-screen">
         <!-- Desktop Sidebar Header -->
         <div class="hidden lg:block px-6 py-4 border-b border-gray-200">
           <div class="flex items-center justify-between">
@@ -211,6 +375,13 @@
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('mobile-overlay');
         const sidebarCollapseBtn = document.getElementById('sidebar-collapse-btn');
+        
+        // Disable tooltip on initial load since sidebar starts expanded
+        const rocketEmoji = document.querySelector('.w-10.h-10');
+        if (rocketEmoji) {
+          rocketEmoji.classList.remove('tooltip');
+          rocketEmoji.removeAttribute('data-tooltip');
+        }
 
         // Mobile menu toggle
         function openMobileMenu() {
@@ -233,15 +404,148 @@
         overlay?.addEventListener('click', closeMobileMenu);
 
         // Desktop sidebar collapse
+        console.log("🔍 Sidebar collapse button found:", sidebarCollapseBtn);
         sidebarCollapseBtn?.addEventListener('click', function() {
-          sidebar.classList.toggle('lg:w-20');
-          sidebar.classList.toggle('lg:w-80');
+          console.log("🎯 Sidebar collapse button clicked!");
+          if (sidebar.classList.contains('lg:w-80')) {
+            sidebar.classList.remove('lg:w-80');
+            sidebar.classList.add('lg:w-22', 'sidebar-collapsed');
+            console.log("📏 Sidebar collapsed to 88px");
+            adjustLayoutForCollapsedSidebar();
+          } else {
+            sidebar.classList.remove('lg:w-22', 'sidebar-collapsed');
+            sidebar.classList.add('lg:w-80');
+            console.log("📏 Sidebar expanded to 320px");
+            adjustLayoutForExpandedSidebar();
+          }
+          console.log("📏 Sidebar width classes after toggle:", sidebar.className);
+        });
+        
+        // Function to adjust layout when sidebar is collapsed
+        function adjustLayoutForCollapsedSidebar() {
+          const messageInput = document.querySelector('#message-input-container');
+          const mainContent = document.querySelector('main');
+          const chatHeader = document.querySelector('#chat-header');
+          
+          if (messageInput) {
+            messageInput.style.left = '5.5rem'; // 88px = 5.5rem
+            messageInput.style.width = 'calc(100vw - 5.5rem)';
+            // Center the form field within the container
+            const form = messageInput.querySelector('form');
+            if (form) {
+              form.style.maxWidth = '48rem'; // 768px - reasonable max width
+              form.style.margin = '0 auto';
+            }
+          }
+          if (mainContent) {
+            mainContent.style.marginLeft = '5.5rem';
+          }
+          if (chatHeader) {
+            chatHeader.style.width = 'calc(100vw - 5.5rem)';
+            chatHeader.style.marginLeft = '5.5rem';
+          }
+          
+          // Enable tooltip when sidebar is collapsed
+          const rocketEmoji = document.querySelector('.w-10.h-10');
+          if (rocketEmoji) {
+            rocketEmoji.classList.add('tooltip');
+            rocketEmoji.setAttribute('data-tooltip', 'Open sidebar');
+          }
+        }
+        
+        // Function to reset layout for mobile view
+        function resetLayoutForMobile() {
+          const messageInput = document.querySelector('#message-input-container');
+          const mainContent = document.querySelector('main');
+          const chatHeader = document.querySelector('#chat-header');
+          
+          if (messageInput) {
+            messageInput.style.left = '0';
+            messageInput.style.width = '100%';
+          }
+          if (mainContent) {
+            mainContent.style.marginLeft = '0';
+          }
+          if (chatHeader) {
+            chatHeader.style.width = '100%';
+            chatHeader.style.marginLeft = '0';
+          }
+        }
+        
+        // Function to adjust layout when sidebar is expanded
+        function adjustLayoutForExpandedSidebar() {
+          const messageInput = document.querySelector('#message-input-container');
+          const mainContent = document.querySelector('main');
+          const chatHeader = document.querySelector('#chat-header');
+          
+          if (messageInput) {
+            messageInput.style.left = '20rem'; // 320px = 20rem
+            messageInput.style.width = 'calc(100vw - 20rem)';
+            // Center the form field within the container
+            const form = messageInput.querySelector('form');
+            if (form) {
+              form.style.maxWidth = '48rem'; // 768px - reasonable max width
+              form.style.margin = '0 auto';
+            }
+          }
+          if (mainContent) {
+            mainContent.style.marginLeft = '0';
+          }
+          if (chatHeader) {
+            chatHeader.style.width = 'calc(100vw - 20rem)';
+            chatHeader.style.marginLeft = '0';
+          }
+          
+          // Disable tooltip when sidebar is expanded
+          const tooltip = document.querySelector('.tooltip');
+          if (tooltip) {
+            tooltip.classList.remove('tooltip');
+            tooltip.removeAttribute('data-tooltip');
+          }
+        }
+
+        // Rocket emoji click to expand sidebar - simplified approach
+        document.addEventListener('click', function(e) {
+          // Skip if clicking on the collapse button
+          if (e.target.closest('#sidebar-collapse-btn')) {
+            return;
+          }
+          
+          console.log("🔍 Click detected on:", e.target);
+          console.log("🔍 Target element:", e.target);
+          console.log("🔍 Target classes:", e.target.className);
+          console.log("🔍 Sidebar collapsed:", sidebar.classList.contains('sidebar-collapsed'));
+          
+          // Check if we clicked on the rocket emoji in collapsed state
+          console.log("🔍 Checking rocket emoji click...");
+          console.log("🔍 Target closest w-10.h-10:", e.target.closest('.w-10.h-10'));
+          
+          if (e.target.closest('.w-10.h-10') && sidebar.classList.contains('sidebar-collapsed')) {
+            console.log("🚀 Rocket emoji clicked to expand sidebar");
+            sidebar.classList.remove('lg:w-22', 'sidebar-collapsed');
+            sidebar.classList.add('lg:w-80');
+            adjustLayoutForExpandedSidebar();
+            return;
+          }
+          
+          console.log("❌ Click was not on rocket emoji in collapsed sidebar");
         });
 
         // Close mobile menu on escape key
         document.addEventListener('keydown', function(e) {
           if (e.key === 'Escape') {
             closeMobileMenu();
+          }
+        });
+        
+        // Handle resize events for mobile/desktop transitions
+        window.addEventListener('resize', function() {
+          if (window.innerWidth < 1024) { // lg breakpoint
+            resetLayoutForMobile();
+          } else if (sidebar.classList.contains('sidebar-collapsed')) {
+            adjustLayoutForCollapsedSidebar();
+          } else {
+            adjustLayoutForExpandedSidebar();
           }
         });
 
