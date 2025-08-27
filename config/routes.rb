@@ -14,19 +14,11 @@ Rails.application.routes.draw do
   get "dashboard/connection_status", to: "dashboard#connection_status"
   get "dashboard/load_more_chats", to: "dashboard#load_more_chats"
   patch "dashboard/update_chat_status/:id", to: "dashboard#update_chat_status", as: :update_chat_status
-  get "providers/index"
-  get "providers/create"
-  get "providers/update"
-  get "providers/destroy"
   # Chat routes
   resources :chats, only: [:index, :show, :new, :create, :update, :destroy] do
     resources :messages, only: [:create]
     post :generate_title, on: :member
   end
-  
-  # Provider routes
-  resources :providers, only: [:index, :create, :update, :destroy]
-  post "providers/:id/set_default", to: "providers#set_default", as: :set_default_provider
   
   # Root route
   root "login#index"

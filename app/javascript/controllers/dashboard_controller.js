@@ -615,10 +615,48 @@ export default class extends Controller {
   
   openSettings() {
     this.settingsModalTarget.classList.remove('hidden')
+    this.loadProviderStatus()
   }
   
   closeSettings() {
     this.settingsModalTarget.classList.add('hidden')
+  }
+
+  loadProviderStatus() {
+    fetch('/dashboard/connection_status')
+      .then(response => response.json())
+      .then(data => {
+        const statusElement = document.getElementById('provider-status');
+        if (statusElement) {
+          if (data.status === 'connected') {
+            statusElement.innerHTML = `
+              <div class="flex items-center">
+                <div class="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
+                <span class="text-green-700">Connected to ${data.provider}</span>
+              </div>
+            `;
+          } else {
+            statusElement.innerHTML = `
+              <div class="flex items-center">
+                <div class="w-2 h-2 bg-red-400 rounded-full mr-2"></div>
+                <span class="text-red-700">Disconnected</span>
+              </div>
+            `;
+          }
+        }
+      })
+      .catch(error => {
+        console.error('Error loading provider status:', error);
+        const statusElement = document.getElementById('provider-status');
+        if (statusElement) {
+          statusElement.innerHTML = `
+            <div class="flex items-center">
+              <div class="w-2 h-2 bg-gray-400 rounded-full mr-2"></div>
+              <span class="text-gray-700">Status unavailable</span>
+            </div>
+          `;
+        }
+      });
   }
 
   toggleDesktopUserProfileMenu() {

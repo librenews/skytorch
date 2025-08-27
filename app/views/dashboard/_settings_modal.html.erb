@@ -1,10 +1,12 @@
 <!-- Settings Modal -->
-<div id="settings-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-  <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+<div id="settings-modal" data-dashboard-target="settingsModal" class="fixed inset-0 bg-opacity-20 backdrop-blur-md hidden z-50">
+  <div class="flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+      <div class="p-6">
     <div class="mt-3">
       <div class="flex items-center justify-between mb-4">
         <h3 class="text-lg font-medium text-gray-900">Settings</h3>
-        <button onclick="closeSettingsModal()" class="text-gray-400 hover:text-gray-600">
+        <button data-action="click->dashboard#closeSettings" class="text-gray-400 hover:text-gray-600">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
           </svg>
@@ -37,57 +39,10 @@
             </div>
           <% end %>
         </div>
-      </div>
-      
-      <!-- Manage Providers Link -->
-      <div class="border-t pt-4">
-        <a href="<%= providers_path %>" class="text-blue-600 hover:text-blue-700 text-sm font-medium">
-          Manage Providers →
-        </a>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
-<script>
-function openSettingsModal() {
-  document.getElementById('settings-modal').classList.remove('hidden');
-  loadProviderStatus();
-}
 
-function closeSettingsModal() {
-  document.getElementById('settings-modal').classList.add('hidden');
-}
-
-function loadProviderStatus() {
-  fetch('/dashboard/connection_status')
-    .then(response => response.json())
-    .then(data => {
-      const statusElement = document.getElementById('provider-status');
-      if (data.status === 'connected') {
-        statusElement.innerHTML = `
-          <div class="flex items-center">
-            <div class="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
-            <span class="text-green-700">Connected to ${data.provider}</span>
-          </div>
-        `;
-      } else {
-        statusElement.innerHTML = `
-          <div class="flex items-center">
-            <div class="w-2 h-2 bg-red-400 rounded-full mr-2"></div>
-            <span class="text-red-700">Disconnected</span>
-          </div>
-        `;
-      }
-    })
-    .catch(error => {
-      console.error('Error loading provider status:', error);
-      document.getElementById('provider-status').innerHTML = `
-        <div class="flex items-center">
-          <div class="w-2 h-2 bg-gray-400 rounded-full mr-2"></div>
-          <span class="text-gray-700">Status unavailable</span>
-        </div>
-      `;
-    });
-}
-</script>
