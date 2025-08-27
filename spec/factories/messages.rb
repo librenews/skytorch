@@ -19,6 +19,58 @@ FactoryBot.define do
       content { "You are a helpful AI assistant." }
     end
 
+    trait :with_usage do
+      role { "assistant" }
+      prompt_tokens { 50 }
+      completion_tokens { 25 }
+      total_tokens { 75 }
+      usage_data { { "model" => "gpt-4o-mini", "estimated" => false } }
+    end
+
+    trait :openai_usage do
+      role { "assistant" }
+      prompt_tokens { 100 }
+      completion_tokens { 50 }
+      total_tokens { 150 }
+      usage_data { 
+        { 
+          "prompt_tokens" => 100,
+          "completion_tokens" => 50,
+          "total_tokens" => 150,
+          "model" => "gpt-4o-mini"
+        } 
+      }
+    end
+
+    trait :anthropic_usage do
+      role { "assistant" }
+      prompt_tokens { 80 }
+      completion_tokens { 40 }
+      total_tokens { 120 }
+      usage_data { 
+        { 
+          "input_tokens" => 80,
+          "output_tokens" => 40,
+          "model" => "claude-3-5-sonnet-20241022"
+        } 
+      }
+    end
+
+    trait :google_usage do
+      role { "assistant" }
+      prompt_tokens { 60 }
+      completion_tokens { 30 }
+      total_tokens { 90 }
+      usage_data { 
+        { 
+          "promptTokenCount" => 60,
+          "candidatesTokenCount" => 30,
+          "totalTokenCount" => 90,
+          "model" => "gemini-1.5-flash"
+        } 
+      }
+    end
+
     trait :long_content do
       content { "This is a very long message with lots of content that might exceed normal limits and test how the system handles longer messages in the chat interface." * 5 }
     end

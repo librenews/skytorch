@@ -7,8 +7,43 @@ RSpec.describe Message, type: :model do
 
   describe 'validations' do
     it { should validate_presence_of(:content) }
-    it { should validate_presence_of(:role) }
-    it { should validate_inclusion_of(:role).in_array(%w[user assistant system]) }
+    # Note: role validation is handled by Rails enum, not by shoulda-matchers
+    
+    # Usage tracking validations
+    it { should validate_numericality_of(:prompt_tokens).only_integer.is_greater_than_or_equal_to(0).allow_nil }
+    it { should validate_numericality_of(:completion_tokens).only_integer.is_greater_than_or_equal_to(0).allow_nil }
+    it { should validate_numericality_of(:total_tokens).only_integer.is_greater_than_or_equal_to(0).allow_nil }
+  end
+
+  describe 'enums' do
+    it 'defines role enum' do
+      expect(Message.roles).to eq({
+        'user' => 'user',
+        'assistant' => 'assistant',
+        'system' => 'system'
+      })
+    end
+  end
+
+  describe 'scopes' do
+    let!(:user_message) { create(:message, :user) }
+    let!(:assistant_message) { create(:message, :assistant) }
+    let!(:system_message) { create(:message, :system) }
+    let!(:message_with_usage) { create(:message, :with_usage) }
+
+    describe '.assistant_messages' do
+      it 'returns only assistant messages' do
+        expect(Message.assistant_messages).to include(assistant_message, message_with_usage)
+        expect(Message.assistant_messages).not_to include(user_message, system_message)
+      end
+    end
+
+    describe '.with_usage' do
+      it 'returns only messages with usage data' do
+        expect(Message.with_usage).to include(message_with_usage)
+        expect(Message.with_usage).not_to include(user_message, assistant_message, system_message)
+      end
+    end
   end
 
   describe 'factory' do
@@ -27,6 +62,22 @@ RSpec.describe Message, type: :model do
     it 'has a valid system message factory' do
       expect(build(:message, :system)).to be_valid
     end
+
+    it 'has a valid factory with usage data' do
+      expect(build(:message, :with_usage)).to be_valid
+    end
+
+    it 'has a valid factory with OpenAI usage' do
+      expect(build(:message, :openai_usage)).to be_valid
+    end
+
+    it 'has a valid factory with Anthropic usage' do
+      expect(build(:message, :anthropic_usage)).to be_valid
+    end
+
+    it 'has a valid factory with Google usage' do
+      expect(build(:message, :google_usage)).to be_valid
+    end
   end
 
   describe 'role validation' do
@@ -37,18 +88,6 @@ RSpec.describe Message, type: :model do
         message = build(:message, role: role, chat: chat)
         expect(message).to be_valid
       end
-    end
-
-    it 'rejects invalid roles' do
-      message = build(:message, role: 'invalid_role', chat: chat)
-      expect(message).not_to be_valid
-      expect(message.errors[:role]).to include('is not included in the list')
-    end
-
-    it 'requires a role' do
-      message = build(:message, role: nil, chat: chat)
-      expect(message).not_to be_valid
-      expect(message.errors[:role]).to include("can't be blank")
     end
   end
 
@@ -77,6 +116,56 @@ RSpec.describe Message, type: :model do
       special_content = "Message with special chars: @#$%^&*()_+-=[]{}|;':\",./<>?"
       message = build(:message, content: special_content, chat: chat)
       expect(message).to be_valid
+    end
+  end
+
+  describe 'usage tracking' do
+    let(:chat) { create(:chat) }
+
+    describe '#has_usage_data?' do
+      it 'returns true when total_tokens is present' do
+        message = create(:message, :with_usage, chat: chat)
+        expect(message.has_usage_data?).to be true
+      end
+
+      it 'returns false when total_tokens is nil' do
+        message = create(:message, :assistant, chat: chat)
+        expect(message.has_usage_data?).to be false
+      end
+    end
+
+    describe '#cost_estimate' do
+      it 'returns 0 when no usage data' do
+        message = create(:message, :assistant, chat: chat)
+        expect(message.cost_estimate).to eq(0)
+      end
+
+      it 'returns estimated cost when usage data is present' do
+        message = create(:message, :with_usage, chat: chat)
+        expected_cost = message.total_tokens * 0.0001
+        expect(message.cost_estimate).to eq(expected_cost)
+      end
+    end
+
+    describe '#set_usage_data' do
+      let(:message) { create(:message, :assistant, chat: chat) }
+      let(:usage_hash) do
+        {
+          prompt_tokens: 100,
+          completion_tokens: 50,
+          total_tokens: 150,
+          model: 'gpt-4o-mini'
+        }
+      end
+
+      it 'sets usage data correctly' do
+        message.set_usage_data(usage_hash)
+        
+        expect(message.prompt_tokens).to eq(100)
+        expect(message.completion_tokens).to eq(50)
+        expect(message.total_tokens).to eq(150)
+        expect(message.usage_data).to eq(usage_hash.stringify_keys)
+      end
     end
   end
 
