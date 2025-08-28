@@ -11,9 +11,8 @@ class MessagesController < ApplicationController
         @chat.update(title: title)
       end
       
-      # Use ChatService to process the message with LLM and MCP
-      chat_service = ChatService.new(current_user.default_provider)
-      result = chat_service.generate_response(@chat, @message.content)
+      # Use ChatService to process the message with LLM
+      result = ChatService.generate_response(@chat, @message.content)
       
       respond_to do |format|
         format.html { redirect_to @chat, notice: 'Message sent successfully.' }

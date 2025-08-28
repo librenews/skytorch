@@ -13,8 +13,6 @@ class Chat < ApplicationRecord
   scope :archived, -> { where(status: :archived) }
   scope :reported, -> { where(status: :reported) }
   
-  acts_as_chat
-  
   def message_count
     messages.count
   end
