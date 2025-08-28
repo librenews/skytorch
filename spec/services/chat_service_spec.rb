@@ -53,6 +53,40 @@ RSpec.describe ChatService, type: :service do
       ChatService.generate_response(chat, user_message)
     end
 
+    context 'with MCP client' do
+      let(:mcp_client) { double('mcp_client') }
+      let(:mock_tools) { [double('tool1'), double('tool2')] }
+      let(:mock_resources) { [double('resource1'), double('resource2')] }
+      let(:mock_templates) { [double('template1'), double('template2')] }
+      let(:mock_prompts) { [double('prompt1'), double('prompt2')] }
+      let(:mock_chat) { double('chat') }
+
+      before do
+        allow(mcp_client).to receive(:tools).and_return(mock_tools)
+        allow(mcp_client).to receive(:resources).and_return(mock_resources)
+        allow(mcp_client).to receive(:resource_templates).and_return(mock_templates)
+        allow(mcp_client).to receive(:prompts).and_return(mock_prompts)
+        allow(RubyLLM).to receive(:chat).and_return(mock_chat)
+        allow(mock_chat).to receive(:with_tools)
+        allow(mock_chat).to receive(:with_resource)
+        allow(mock_chat).to receive(:with_resource_template)
+        allow(mock_chat).to receive(:with_prompt)
+        allow(mock_chat).to receive(:ask).and_return(double(content: 'test', input_tokens: 10, output_tokens: 20))
+      end
+
+      it 'adds MCP tools, resources, templates, and prompts to the chat' do
+        expect(mock_chat).to receive(:with_tools).with(*mock_tools)
+        expect(mock_chat).to receive(:with_resource).with(mock_resources[0])
+        expect(mock_chat).to receive(:with_resource).with(mock_resources[1])
+        expect(mock_chat).to receive(:with_resource_template).with(mock_templates[0])
+        expect(mock_chat).to receive(:with_resource_template).with(mock_templates[1])
+        expect(mock_chat).to receive(:with_prompt).with(mock_prompts[0])
+        expect(mock_chat).to receive(:with_prompt).with(mock_prompts[1])
+
+        ChatService.generate_response(chat, user_message, mcp_client)
+      end
+    end
+
     context 'when LLM call fails' do
       before do
         allow(RubyLLM).to receive(:chat).and_raise(StandardError, 'API Error')
@@ -116,6 +150,28 @@ RSpec.describe ChatService, type: :service do
         )
         
         ChatService.generate_title(chat)
+      end
+
+      context 'with MCP client' do
+        let(:mcp_client) { double('mcp_client') }
+        let(:mock_tools) { [double('tool1')] }
+        let(:mock_chat) { double('chat') }
+
+        before do
+          allow(mcp_client).to receive(:tools).and_return(mock_tools)
+          allow(mcp_client).to receive(:resources).and_return([])
+          allow(mcp_client).to receive(:resource_templates).and_return([])
+          allow(mcp_client).to receive(:prompts).and_return([])
+          allow(RubyLLM).to receive(:chat).and_return(mock_chat)
+          allow(mock_chat).to receive(:with_tools)
+          allow(mock_chat).to receive(:ask).and_return(double(content: 'Generated Title'))
+        end
+
+        it 'adds MCP tools to the title generation chat' do
+          expect(mock_chat).to receive(:with_tools).with(*mock_tools)
+          
+          ChatService.generate_title(chat, mcp_client)
+        end
       end
 
       it 'updates the chat title in the database' do

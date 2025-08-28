@@ -1,10 +1,36 @@
 require 'ruby_llm'
 
 class ChatService
-  def self.generate_response(chat, user_message)
+  def self.generate_response(chat, user_message, mcp_client = nil)
     begin
       # Use RubyLLM with the default model from the configured provider
       llm_chat = RubyLLM.chat
+      
+      # Add MCP tools, resources, and prompts if provided
+      if mcp_client
+        # Add available tools
+        tools = mcp_client.tools
+        llm_chat.with_tools(*tools) if tools.any?
+        
+        # Add available resources
+        resources = mcp_client.resources
+        resources.each do |resource|
+          llm_chat.with_resource(resource)
+        end if resources.any?
+        
+        # Add available resource templates
+        templates = mcp_client.resource_templates
+        templates.each do |template|
+          llm_chat.with_resource_template(template)
+        end if templates.any?
+        
+        # Add available prompts
+        prompts = mcp_client.prompts
+        prompts.each do |prompt|
+          llm_chat.with_prompt(prompt)
+        end if prompts.any?
+      end
+      
       response = llm_chat.ask(user_message)
       
       # Create the assistant message
@@ -41,7 +67,7 @@ class ChatService
     end
   end
 
-  def self.generate_title(chat)
+  def self.generate_title(chat, mcp_client = nil)
     messages = chat.messages.order(:created_at)
     return "New Chat" if messages.empty?
     
@@ -64,6 +90,32 @@ class ChatService
         end.join("\n")
         
         llm_chat = RubyLLM.chat
+        
+        # Add MCP tools, resources, and prompts if provided
+        if mcp_client
+          # Add available tools
+          tools = mcp_client.tools
+          llm_chat.with_tools(*tools) if tools.any?
+          
+          # Add available resources
+          resources = mcp_client.resources
+          resources.each do |resource|
+            llm_chat.with_resource(resource)
+          end if resources.any?
+          
+          # Add available resource templates
+          templates = mcp_client.resource_templates
+          templates.each do |template|
+            llm_chat.with_resource_template(template)
+          end if templates.any?
+          
+          # Add available prompts
+          prompts = mcp_client.prompts
+          prompts.each do |prompt|
+            llm_chat.with_prompt(prompt)
+          end if prompts.any?
+        end
+        
         title = llm_chat.ask("Generate a short, descriptive title (max 50 characters) for this conversation:\n\n#{conversation_context}").content.strip
         
         # Update the chat title
