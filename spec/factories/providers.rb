@@ -26,13 +26,6 @@ FactoryBot.define do
       base_url { "https://generativelanguage.googleapis.com" }
     end
 
-    trait :mock do
-      name { "Mock Provider" }
-      provider_type { "mock" }
-      api_key { "mock_key" }
-      default_model { "mock-model" }
-    end
-
     trait :inactive do
       is_active { false }
     end

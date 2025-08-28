@@ -36,6 +36,8 @@ Rails.application.config.after_initialize do
           config.gemini_api_key = default_provider.api_key
           config.default_model = default_provider.default_model
         end
+      when 'mock'
+        raise "Mock providers are not supported with RubyLLM. Please use a real provider (openai, anthropic, or google)."
       end
       
       Rails.logger.info "RubyLLM configured with #{default_provider.provider_type} provider"

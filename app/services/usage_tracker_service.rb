@@ -32,19 +32,6 @@ class UsageTrackerService
         total_tokens: usage['totalTokenCount'] || usage[:totalTokenCount],
         raw_data: usage
       )
-    },
-    
-    'mock' => ->(response) {
-      # Mock provider returns estimated usage
-      content_length = response.dig('content')&.length || response.dig(:content)&.length || 0
-      estimated_tokens = content_length / 4 # Rough estimate: 1 token ≈ 4 characters
-      
-      UsageData.new(
-        prompt_tokens: 10, # Mock prompt tokens
-        completion_tokens: estimated_tokens,
-        total_tokens: 10 + estimated_tokens,
-        raw_data: { estimated: true, content_length: content_length }
-      )
     }
   }
   
@@ -110,8 +97,7 @@ class UsageTrackerService
       else
         { prompt_per_1k: 0.000075, completion_per_1k: 0.0003 } # Default to Gemini 1.5 Flash pricing
       end
-    when 'mock'
-      { prompt_per_1k: 0.0, completion_per_1k: 0.0 } # Free for mock provider
+
     else
       { prompt_per_1k: 0.001, completion_per_1k: 0.003 } # Generic fallback pricing
     end

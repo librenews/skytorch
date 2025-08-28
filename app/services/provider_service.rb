@@ -30,16 +30,6 @@ class ProviderService
     )
   end
 
-  def self.create_mock_provider
-    Provider.create!(
-      name: "Mock Provider",
-      provider_type: "mock",
-      api_key: "mock_key",
-      default_model: "mock-model",
-      is_active: true
-    )
-  end
-
   def self.available_providers
     Provider.active.order(:name)
   end

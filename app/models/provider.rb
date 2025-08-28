@@ -2,8 +2,8 @@ class Provider < ApplicationRecord
   belongs_to :user, optional: true
   
   validates :name, presence: true
-  validates :provider_type, presence: true, inclusion: { in: %w[openai anthropic google mock] }
-  validates :api_key, presence: true, unless: -> { provider_type == 'mock' }
+  validates :provider_type, presence: true, inclusion: { in: %w[openai anthropic google] }
+  validates :api_key, presence: true
   validates :base_url, presence: true, if: -> { provider_type == 'google' }
   validates :default_model, presence: true
   

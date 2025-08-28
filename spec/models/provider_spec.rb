@@ -7,7 +7,7 @@ RSpec.describe Provider, type: :model do
     it { should validate_presence_of(:api_key) }
     it { should validate_presence_of(:default_model) }
     
-    it { should validate_inclusion_of(:provider_type).in_array(%w[openai anthropic google mock]) }
+    it { should validate_inclusion_of(:provider_type).in_array(%w[openai anthropic google]) }
   end
 
   describe 'associations' do
@@ -45,7 +45,7 @@ RSpec.describe Provider, type: :model do
 
   describe 'provider type validation' do
     it 'accepts valid provider types' do
-      %w[openai anthropic mock].each do |provider_type|
+      %w[openai anthropic].each do |provider_type|
         provider = build(:provider, provider_type: provider_type)
         expect(provider).to be_valid
       end
@@ -63,18 +63,11 @@ RSpec.describe Provider, type: :model do
   end
 
   describe 'conditional validations' do
-    context 'when provider_type is not mock' do
+    context 'when provider_type is openai' do
       it 'requires api_key' do
         provider = build(:provider, provider_type: 'openai', api_key: nil)
         expect(provider).not_to be_valid
         expect(provider.errors[:api_key]).to include("can't be blank")
-      end
-    end
-
-    context 'when provider_type is mock' do
-      it 'does not require api_key' do
-        provider = build(:provider, provider_type: 'mock', api_key: nil)
-        expect(provider).to be_valid
       end
     end
 
