@@ -35,9 +35,14 @@ class ToolOrchestrator
     missing_params = []
     
     required_tools.each do |tool|
+      # Get the input schema to check required fields
+      input_schema = tool.instance_variable_get(:@input_schema)
+      required_fields = input_schema&.dig('required') || []
+      
       # Get tool parameters from the ruby_llm-mcp Parameter objects
       tool.parameters&.each do |param_name, param|
-        if param.required && param.default.nil?
+        # Check if this parameter is required according to the schema
+        if required_fields.include?(param_name) && param.default.nil?
           missing_params << {
             tool: tool.name,
             parameter: param_name,
