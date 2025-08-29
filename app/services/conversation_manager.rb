@@ -103,9 +103,10 @@ class ConversationManager
     # Update state to executing_tools
     @state_manager.update!(status: 'executing_tools')
     
-    # Convert tools to tool calls format
+    # Convert tools to tool calls format - handle both Tool objects and hashes
     tool_calls = required_tools.map do |tool|
-      { name: tool.name, parameters: @state_manager.collected_params }
+      tool_name = tool.is_a?(Hash) ? tool[:name] : tool.name
+      { name: tool_name, parameters: @state_manager.collected_params }
     end
     
     # Execute tool chain
