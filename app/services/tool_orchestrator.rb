@@ -103,9 +103,14 @@ class ToolOrchestrator
     
     response = llm_chat.ask(<<~PROMPT)
       Classify this user message into one of these categories:
-      - provide_param: User is providing a parameter value
-      - cancel: User wants to cancel the current operation
-      - new_topic: User is starting a new topic
+      - provide_param: User is providing a parameter value (like a path, filename, or other specific value)
+      - cancel: User wants to cancel the current operation (says "cancel", "stop", "nevermind", etc.)
+      - new_topic: User is starting a completely new topic or conversation
+      
+      Examples:
+      - "/tmp", "/home/user", "myfile.txt" -> provide_param
+      - "cancel", "stop", "nevermind" -> cancel
+      - "How's the weather?", "Tell me a joke" -> new_topic
       
       User message: "#{user_message}"
       
