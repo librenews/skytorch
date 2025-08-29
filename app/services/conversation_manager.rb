@@ -87,7 +87,12 @@ class ConversationManager
 
   def execute_pending_tools(original_message)
     # Get the actual tool objects for the pending tools
-    pending_tools = get_tools_by_names(@state_manager.pending_tool_names)
+    # If pending_tool_names is empty but we have missing_params, reconstruct from missing_params
+    tool_names = @state_manager.pending_tool_names.any? ? 
+      @state_manager.pending_tool_names : 
+      @state_manager.missing_params.map { |param| param['tool'] }.uniq
+    
+    pending_tools = get_tools_by_names(tool_names)
     
     # Convert pending tools to tool calls
     tool_calls = pending_tools.map do |tool|
