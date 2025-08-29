@@ -4,11 +4,11 @@ class ChatService
   def self.generate_response(chat, user_message, mcp_clients = nil)
     # If we have MCP clients, use the new conversation flow
     if mcp_clients&.any?
-      conversation_manager = ConversationManager.new(chat)
+      conversation_manager = ConversationManager.new(chat, mcp_clients)
       result = conversation_manager.process_message(user_message)
       
       case result[:type]
-      when :clarification, :final_response
+      when :clarification, :tool_response
         # Both are normal assistant messages
         assistant_message = chat.messages.create!(
           content: result[:content],
@@ -19,16 +19,13 @@ class ChatService
           message: assistant_message 
         }
         
-      when :cancelled, :error
-        # Both are system messages
-        system_message = chat.messages.create!(
-          content: result[:content],
-          role: 'system'
-        )
-        return { 
-          success: false, 
-          message: system_message 
-        }
+      when :normal
+        # No tools needed, use normal LLM response
+        return generate_simple_response(chat, user_message)
+        
+      else
+        # Fall back to normal response
+        return generate_simple_response(chat, user_message)
       end
     else
       # Fall back to current simple implementation

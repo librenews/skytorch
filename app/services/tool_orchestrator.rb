@@ -1,58 +1,80 @@
 class ToolOrchestrator
   def initialize(mcp_clients)
-    @mcp_clients = mcp_clients.compact
-    @available_tools = collect_all_tools
+    @mcp_clients = mcp_clients
   end
 
   def detect_required_tools(user_message)
-    return [] if @available_tools.empty?
+    # Get all available tools from all clients
+    all_tools = collect_all_tools
     
-    # Use LLM to determine which tools are needed
-    llm_chat = RubyLLM.chat
-    
+    if all_tools.empty?
+      Rails.logger.info "No tools available from MCP clients"
+      return []
+    end
+
     # Create a simple tool list for the LLM to analyze
-    tool_list = @available_tools.map do |tool|
-      "#{tool.name}: #{tool.description}"
-    end.join("\n")
-    
+    tool_list = all_tools.map do |tool|
+      {
+        name: tool.name,
+        description: tool.description || "No description available"
+      }
+    end
+
+    # Ask LLM which tool(s) are needed
+    llm_chat = RubyLLM.chat
     response = llm_chat.ask(<<~PROMPT)
-      Analyze this user message and determine which tools are needed:
-      "#{user_message}"
+      Analyze this user message and determine which tools are needed.
       
       Available tools:
-      #{tool_list}
+      #{tool_list.map { |t| "- #{t[:name]}: #{t[:description]}" }.join("\n")}
       
-      Return only the tool names that are needed, separated by commas. If no tools are needed, return 'none'.
+      User message: "#{user_message}"
+      
+      Return a JSON array of tool names that are needed. If no tools are needed, return an empty array.
+      Example: ["list_directory"] or []
+      
+      Only return the JSON array, nothing else.
     PROMPT
-    
-    tool_names = response.content.downcase.split(',').map(&:strip)
-    return [] if tool_names.include?('none')
-    
-    @available_tools.select { |tool| tool_names.include?(tool.name.downcase) }
+
+    # Parse the response
+    begin
+      tool_names = JSON.parse(response.content)
+      Rails.logger.info "LLM detected tools: #{tool_names}"
+      
+      # Find the actual tool objects
+      detected_tools = all_tools.select { |tool| tool_names.include?(tool.name) }
+      Rails.logger.info "Found #{detected_tools.length} matching tools"
+      
+      detected_tools
+    rescue JSON::ParserError => e
+      Rails.logger.error "Failed to parse LLM response: #{response.content}"
+      Rails.logger.error "Error: #{e.message}"
+      []
+    end
   end
 
-  def check_missing_parameters(required_tools, collected_params = {})
+  def check_missing_parameters(tools, collected_params = {})
     missing_params = []
     
-    required_tools.each do |tool|
-      # Get the input schema to check required fields
+    tools.each do |tool|
+      # Get the tool's required parameters
       input_schema = tool.instance_variable_get(:@input_schema)
       required_fields = input_schema&.dig('required') || []
       
-      # Get tool parameters from the ruby_llm-mcp Parameter objects
-      tool.parameters&.each do |param_name, param|
-        # Check if this parameter is required according to the schema
-        if required_fields.include?(param_name) && param.default.nil?
-          # Check if the parameter has already been provided
-          param_provided = collected_params.key?(param_name.to_s) || collected_params.key?(param_name.to_sym)
+      required_fields.each do |param_name|
+        # Check if parameter is already collected
+        param_provided = collected_params.key?(param_name.to_s) || collected_params.key?(param_name.to_sym)
+        
+        unless param_provided
+          # Find parameter description
+          param = tool.parameters&.[](param_name)
+          description = param&.description || param_name
           
-          unless param_provided
-            missing_params << {
-              tool: tool.name,
-              parameter: param_name,
-              description: param.description || param_name
-            }
-          end
+          missing_params << {
+            tool: tool.name,
+            parameter: param_name,
+            description: description
+          }
         end
       end
     end
@@ -60,178 +82,112 @@ class ToolOrchestrator
     missing_params
   end
 
+  def generate_clarification_question(missing_params)
+    return nil if missing_params.empty?
+    
+    # For now, just ask for the first missing parameter
+    param = missing_params.first
+    "I need the #{param[:description]} for the #{param[:tool]} tool. Could you please provide it?"
+  end
+
   def execute_tool_chain(tool_calls, collected_params)
     results = []
     
-    tool_calls.each_with_index do |tool_call, index|
-      begin
-        # Execute tool with collected parameters
-        result = execute_single_tool(tool_call, collected_params)
-        results << result
-        
-        # If this isn't the last tool, chain the output to the next tool
-        if index < tool_calls.length - 1
-          next_tool = tool_calls[index + 1]
-          chain_output_to_next_tool(result, next_tool, collected_params)
-        end
-      rescue => e
-        Rails.logger.error "Tool execution failed for #{tool_call[:name]}: #{e.message}"
-        results << { tool: tool_call[:name], error: e.message }
+    tool_calls.each do |tool_call|
+      tool_name = tool_call[:name]
+      parameters = tool_call[:parameters] || {}
+      
+      # Find the tool
+      tool = find_tool_by_name(tool_name)
+      unless tool
+        results << {
+          tool: tool_name,
+          error: "Tool not found: #{tool_name}",
+          content: nil
+        }
+        next
       end
+      
+      # Merge collected parameters with tool call parameters
+      merged_params = collected_params.merge(parameters)
+      
+      # Execute the tool
+      result = execute_single_tool(tool, merged_params)
+      results << result
     end
     
     results
   end
 
-  def generate_clarification_question(missing_params)
-    return nil if missing_params.empty?
+  def generate_response_with_results(results, original_message)
+    successful_results = results.select { |r| !r[:error] }
+    failed_results = results.select { |r| r[:error] }
     
-    llm_chat = RubyLLM.chat
+    if successful_results.empty?
+      return "I encountered some issues while trying to help you. Please try again or let me know if you need assistance with something else."
+    end
     
-    param_descriptions = missing_params.map do |param|
-      "#{param['parameter']} for #{param['tool']} (#{param['description']})"
-    end.join("\n")
+    # For now, just return the first successful result
+    result = successful_results.first
+    content = result[:content]
     
-    response = llm_chat.ask(<<~PROMPT)
-      Generate a natural, friendly question to ask the user for this missing information:
-      
-      #{param_descriptions}
-      
-      Ask for the most important missing parameter first. Be conversational and helpful.
-    PROMPT
-    
-    response.content
-  end
-
-  def classify_user_intent(user_message)
-    llm_chat = RubyLLM.chat
-    
-    response = llm_chat.ask(<<~PROMPT)
-      Classify this user message into one of these categories:
-      - provide_param: User is providing a parameter value (like a path, filename, or other specific value)
-      - cancel: User wants to cancel the current operation (says "cancel", "stop", "nevermind", etc.)
-      - new_topic: User is starting a completely new topic or conversation
-      
-      Examples:
-      - "/tmp", "/home/user", "myfile.txt" -> provide_param
-      - "cancel", "stop", "nevermind" -> cancel
-      - "How's the weather?", "Tell me a joke" -> new_topic
-      
-      User message: "#{user_message}"
-      
-      Return only the category name.
-    PROMPT
-    
-    response.content.downcase.strip.to_sym
-  end
-
-  def generate_response_with_partial_results(original_message, tool_results)
-    llm_chat = RubyLLM.chat
-    
-    # Separate successful and failed results
-    successful_results = tool_results.reject { |r| r[:error] }
-    failed_results = tool_results.select { |r| r[:error] }
-    
-    context = successful_results.map do |result|
-      "Tool #{result[:tool]} result: #{result[:content]}"
-    end.join("\n")
-    
-    error_context = failed_results.map do |result|
-      error_msg = result[:error]
-      # Add helpful context for common path-related errors
-      if error_msg.include?("Access denied") && error_msg.include?("allowed directories")
-        error_msg += "\n\nNote: The available directories are /private/tmp. You can use 'list_allowed_directories' to see what's available."
-      end
-      "Tool #{result[:tool]} failed: #{error_msg}"
-    end.join("\n")
-    
-    prompt = <<~PROMPT
-      Original user message: "#{original_message}"
-      
-      #{context}
-      
-      #{error_context}
-      
-      Please provide a helpful response using the available information. 
-      If some information is missing due to tool failures, acknowledge it but provide the best answer possible.
-      If there are path-related errors, suggest the correct paths or available directories.
-      Be natural and conversational.
-    PROMPT
-    
-    response = llm_chat.ask(prompt)
-    response.content
+    if content.is_a?(String)
+      return content
+    elsif content.is_a?(Array) && content.any?
+      # Handle array of content items
+      return content.map { |item| item.text || item.content }.join("\n")
+    else
+      return "I completed the requested operation. Let me know if you need anything else!"
+    end
   end
 
   private
 
   def collect_all_tools
-    tools = []
+    all_tools = []
+    
     @mcp_clients.each do |client|
+      next unless client.respond_to?(:alive?) && client.alive?
+      next unless client.respond_to?(:capabilities) && client.capabilities.tools_list?
+      
       begin
-        # Check if client is alive and has tools capability
-        next unless client.respond_to?(:alive?) && client.alive?
-        next unless client.respond_to?(:capabilities) && client.capabilities.tools_list?
-        
-        client_tools = client.tools
-        tools.concat(client_tools) if client_tools && client_tools.any?
+        tools = client.tools
+        all_tools.concat(tools) if tools
       rescue => e
-        Rails.logger.error "Failed to get tools from MCP client #{client.name}: #{e.message}"
+        Rails.logger.error "Failed to get tools from client: #{e.message}"
       end
     end
-    tools
+    
+    all_tools
   end
 
-  def execute_single_tool(tool_call, collected_params)
-    # Find the MCP client that has this tool
-    client = find_client_with_tool(tool_call[:name])
-    return { tool: tool_call[:name], error: "Tool not found" } unless client
-    
-    tool = client.tool(tool_call[:name])
-    return { tool: tool_call[:name], error: "Tool not available" } unless tool
-    
-    # Get the tool's required fields
-    input_schema = tool.instance_variable_get(:@input_schema)
-    required_fields = input_schema&.dig('required') || []
-    
-    # Prepare parameters - only include relevant ones for this tool
-    parameters = tool_call[:parameters] || {}
-    tool_params = collected_params.slice(*required_fields.map(&:to_s))
-    parameters.merge!(tool_params)
-    
-    result = tool.execute(**parameters)
-    
-    # Handle the result based on the tool's response format
-    if result.is_a?(Hash) && result[:error]
-      { tool: tool_call[:name], error: result[:error] }
-    elsif result.respond_to?(:text)
-      { tool: tool_call[:name], content: result.text }
-    else
-      { tool: tool_call[:name], content: result.to_s }
-    end
-  rescue => e
-    { tool: tool_call[:name], error: e.message }
+  def find_tool_by_name(tool_name)
+    all_tools = collect_all_tools
+    all_tools.find { |tool| tool.name == tool_name }
   end
 
-  def find_client_with_tool(tool_name)
-    @mcp_clients.find do |client|
-      begin
-        next unless client.respond_to?(:alive?) && client.alive?
-        next unless client.respond_to?(:capabilities) && client.capabilities.tools_list?
-        
-        client.tools.any? { |tool| tool.name == tool_name }
-      rescue
-        false
-      end
-    end
-  end
-
-  def chain_output_to_next_tool(result, next_tool, collected_params)
-    # This is a simplified implementation
-    # In practice, you'd need more sophisticated output mapping
-    if result[:content] && !result[:error]
-      # Use a structured approach to avoid overwriting previous outputs
-      collected_params["tool_outputs"] ||= {}
-      collected_params["tool_outputs"][result[:tool]] = result[:content]
+  def execute_single_tool(tool, parameters)
+    begin
+      Rails.logger.info "Executing tool: #{tool.name} with parameters: #{parameters}"
+      
+      # Execute the tool
+      result = tool.execute(**parameters)
+      
+      Rails.logger.info "Tool execution successful: #{tool.name}"
+      
+      {
+        tool: tool.name,
+        content: result,
+        error: nil
+      }
+    rescue => e
+      Rails.logger.error "Tool execution failed: #{tool.name} - #{e.message}"
+      
+      {
+        tool: tool.name,
+        content: nil,
+        error: e.message
+      }
     end
   end
 end

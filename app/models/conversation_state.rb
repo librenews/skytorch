@@ -1,53 +1,43 @@
 class ConversationState < ApplicationRecord
   belongs_to :chat
-  
-  validates :status, presence: true, inclusion: { in: %w[normal collecting_params executing_tools] }
-  
-  # Default values for JSONB fields
-  attribute :pending_tools, :json, default: []
+
+  # Store pending tool names as JSON array of strings
+  # Store missing parameters as JSON array of parameter hashes
+  # Store collected parameters as JSON hash
+  attribute :pending_tool_names, :json, default: []
   attribute :missing_params, :json, default: []
   attribute :collected_params, :json, default: {}
-  attribute :tool_results, :json, default: []
-  
+
+  def set_pending_tools(tools)
+    self.pending_tool_names = tools.map(&:name)
+    save!
+  end
+
+  def pending_tools
+    # This method will be overridden by the ConversationManager to provide actual tool objects
+    pending_tool_names
+  end
+
+  def update_missing_params(params)
+    self.missing_params = params
+    save!
+  end
+
   def fill_parameter(value)
     return false if missing_params.empty?
     
-    # Fill the parameter for the first missing tool (most relevant)
     param_name = missing_params.first['parameter']
     collected_params[param_name] = value
     
-    # Remove all missing parameters with the same name (since they all need the same value)
+    # Remove all missing parameters with this name
     missing_params.reject! { |param| param['parameter'] == param_name }
-    
     save!
   end
-  
-  def all_parameters_filled?
-    missing_params.empty?
-  end
-  
-  def clear_state
-    update!(
-      status: 'normal',
-      pending_tools: [],
-      missing_params: [],
-      collected_params: {},
-      original_message: nil,
-      tool_results: []
-    )
-  end
-  
-  def remove_failed_tool(tool_name)
-    pending_tools.reject! { |tool| tool['name'] == tool_name }
-    save!
-  end
-  
-  def add_tool_result(tool_name, result)
-    tool_results << {
-      tool: tool_name,
-      content: result,
-      timestamp: Time.current
-    }
+
+  def clear_pending_tools
+    self.pending_tool_names = []
+    self.missing_params = []
+    self.collected_params = {}
     save!
   end
 end
