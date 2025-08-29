@@ -7,8 +7,8 @@ class ConversationManager
   end
 
   def process_message(user_message)
-    # Check if we're waiting for parameters
-    if @state_manager.pending_tool_names.any?
+    # Check if we're waiting for parameters (check both pending tools and missing params)
+    if @state_manager.pending_tool_names.any? || @state_manager.missing_params.any?
       # Check if user is providing a parameter
       if looks_like_parameter(user_message)
         @state_manager.fill_parameter(user_message)
@@ -58,7 +58,7 @@ class ConversationManager
       # Execute tools immediately
       return execute_tools(required_tools, user_message)
     else
-      # Need to collect parameters
+      # Need to collect parameters - store the tool names for later execution
       @state_manager.set_pending_tools(required_tools)
       @state_manager.update_missing_params(missing_params)
       
@@ -87,6 +87,7 @@ class ConversationManager
 
   def execute_pending_tools(original_message)
     # Get the actual tool objects for the pending tools
+    # Use the stored pending_tool_names, which should be available
     pending_tools = get_tools_by_names(@state_manager.pending_tool_names)
     
     # Convert pending tools to tool calls
