@@ -10,9 +10,20 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_28_005544) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_29_141157) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "chat_mcp_servers", force: :cascade do |t|
+    t.bigint "chat_id", null: false
+    t.string "name"
+    t.string "transport_type"
+    t.jsonb "config"
+    t.boolean "is_active"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["chat_id"], name: "index_chat_mcp_servers_on_chat_id"
+  end
 
   create_table "chats", force: :cascade do |t|
     t.string "title"
@@ -22,6 +33,28 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_28_005544) do
     t.string "status"
     t.index ["status"], name: "index_chats_on_status"
     t.index ["user_id"], name: "index_chats_on_user_id"
+  end
+
+  create_table "conversation_states", force: :cascade do |t|
+    t.bigint "chat_id", null: false
+    t.string "status"
+    t.jsonb "pending_tools"
+    t.jsonb "missing_params"
+    t.jsonb "collected_params"
+    t.text "original_message"
+    t.jsonb "tool_results"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["chat_id"], name: "index_conversation_states_on_chat_id"
+  end
+
+  create_table "global_mcp_servers", force: :cascade do |t|
+    t.string "name"
+    t.string "transport_type"
+    t.jsonb "config"
+    t.boolean "is_active"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "messages", force: :cascade do |t|
@@ -52,6 +85,17 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_28_005544) do
     t.index ["user_id"], name: "index_providers_on_user_id"
   end
 
+  create_table "user_mcp_servers", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "name"
+    t.string "transport_type"
+    t.jsonb "config"
+    t.boolean "is_active"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_user_mcp_servers_on_user_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "bluesky_did"
     t.string "bluesky_handle"
@@ -64,7 +108,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_28_005544) do
     t.datetime "profile_updated_at"
   end
 
+  add_foreign_key "chat_mcp_servers", "chats"
   add_foreign_key "chats", "users"
+  add_foreign_key "conversation_states", "chats"
   add_foreign_key "messages", "chats"
   add_foreign_key "providers", "users"
+  add_foreign_key "user_mcp_servers", "users"
 end

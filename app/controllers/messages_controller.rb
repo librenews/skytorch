@@ -11,11 +11,11 @@ class MessagesController < ApplicationController
         @chat.update(title: title)
       end
       
-      # Get MCP client if available
-      mcp_client = get_mcp_client
+      # Get MCP clients if available
+      mcp_clients = get_mcp_clients
       
       # Use ChatService to process the message with LLM
-      result = ChatService.generate_response(@chat, @message.content, mcp_client)
+      result = ChatService.generate_response(@chat, @message.content, mcp_clients)
       
       respond_to do |format|
         format.html { redirect_to @chat, notice: 'Message sent successfully.' }
@@ -62,25 +62,8 @@ class MessagesController < ApplicationController
     params.require(:message).permit(:content)
   end
   
-  def get_mcp_client
-    # For now, return nil. In the future, this could be:
-    # - Stored in the chat model
-    # - Retrieved from user preferences
-    # - Created based on chat context
-    # - Retrieved from a global MCP client manager
-    
-    # Example implementation:
-    # return nil unless @chat.mcp_server_url.present?
-    # 
-    # RubyLLM::MCP.client(
-    #   name: "chat-#{@chat.id}",
-    #   transport_type: :streamable,
-    #   config: {
-    #     url: @chat.mcp_server_url,
-    #     headers: { "Authorization" => "Bearer #{@chat.mcp_auth_token}" }
-    #   }
-    # )
-    
-    nil
+  def get_mcp_clients
+    # Get MCP clients from the hybrid registry
+    McpClientRegistry.get_clients_for_chat(@chat)
   end
 end

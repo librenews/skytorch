@@ -1,36 +1,45 @@
 require 'ruby_llm'
 
 class ChatService
-  def self.generate_response(chat, user_message, mcp_client = nil)
+  def self.generate_response(chat, user_message, mcp_clients = nil)
+    # If we have MCP clients, use the new conversation flow
+    if mcp_clients&.any?
+      conversation_manager = ConversationManager.new(chat)
+      result = conversation_manager.process_message(user_message)
+      
+      case result[:type]
+      when :clarification, :final_response
+        # Both are normal assistant messages
+        assistant_message = chat.messages.create!(
+          content: result[:content],
+          role: 'assistant'
+        )
+        return { 
+          success: true, 
+          message: assistant_message 
+        }
+        
+      when :cancelled, :error
+        # Both are system messages
+        system_message = chat.messages.create!(
+          content: result[:content],
+          role: 'system'
+        )
+        return { 
+          success: false, 
+          message: system_message 
+        }
+      end
+    else
+      # Fall back to current simple implementation
+      generate_simple_response(chat, user_message)
+    end
+  end
+
+  def self.generate_simple_response(chat, user_message)
     begin
       # Use RubyLLM with the default model from the configured provider
       llm_chat = RubyLLM.chat
-      
-      # Add MCP tools, resources, and prompts if provided
-      if mcp_client
-        # Add available tools
-        tools = mcp_client.tools
-        llm_chat.with_tools(*tools) if tools.any?
-        
-        # Add available resources
-        resources = mcp_client.resources
-        resources.each do |resource|
-          llm_chat.with_resource(resource)
-        end if resources.any?
-        
-        # Add available resource templates
-        templates = mcp_client.resource_templates
-        templates.each do |template|
-          llm_chat.with_resource_template(template)
-        end if templates.any?
-        
-        # Add available prompts
-        prompts = mcp_client.prompts
-        prompts.each do |prompt|
-          llm_chat.with_prompt(prompt)
-        end if prompts.any?
-      end
-      
       response = llm_chat.ask(user_message)
       
       # Create the assistant message

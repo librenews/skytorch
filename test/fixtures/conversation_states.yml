@@ -1,0 +1,19 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  chat: one
+  status: MyString
+  pending_tools: 
+  missing_params: 
+  collected_params: 
+  original_message: MyText
+  tool_results: 
+
+two:
+  chat: two
+  status: MyString
+  pending_tools: 
+  missing_params: 
+  collected_params: 
+  original_message: MyText
+  tool_results: 
