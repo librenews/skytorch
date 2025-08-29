@@ -127,7 +127,12 @@ class ToolOrchestrator
     end.join("\n")
     
     error_context = failed_results.map do |result|
-      "Tool #{result[:tool]} failed: #{result[:error]}"
+      error_msg = result[:error]
+      # Add helpful context for common path-related errors
+      if error_msg.include?("Access denied") && error_msg.include?("allowed directories")
+        error_msg += "\n\nNote: The available directories are /private/tmp. You can use 'list_allowed_directories' to see what's available."
+      end
+      "Tool #{result[:tool]} failed: #{error_msg}"
     end.join("\n")
     
     prompt = <<~PROMPT
@@ -139,6 +144,7 @@ class ToolOrchestrator
       
       Please provide a helpful response using the available information. 
       If some information is missing due to tool failures, acknowledge it but provide the best answer possible.
+      If there are path-related errors, suggest the correct paths or available directories.
       Be natural and conversational.
     PROMPT
     
