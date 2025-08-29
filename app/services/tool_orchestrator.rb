@@ -84,7 +84,7 @@ class ToolOrchestrator
     llm_chat = RubyLLM.chat
     
     param_descriptions = missing_params.map do |param|
-      "#{param[:parameter]} for #{param[:tool]} (#{param[:description]})"
+      "#{param['parameter']} for #{param['tool']} (#{param['description']})"
     end.join("\n")
     
     response = llm_chat.ask(<<~PROMPT)

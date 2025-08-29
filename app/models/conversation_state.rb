@@ -12,10 +12,12 @@ class ConversationState < ApplicationRecord
   def fill_parameter(value)
     return false if missing_params.empty?
     
-    # Fill the first missing parameter
-    param_to_fill = missing_params.first
-    collected_params[param_to_fill['parameter']] = value
-    missing_params.shift
+    # Fill the parameter for the first missing tool (most relevant)
+    param_name = missing_params.first['parameter']
+    collected_params[param_name] = value
+    
+    # Remove all missing parameters with the same name (since they all need the same value)
+    missing_params.reject! { |param| param['parameter'] == param_name }
     
     save!
   end
