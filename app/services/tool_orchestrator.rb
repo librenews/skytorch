@@ -31,7 +31,7 @@ class ToolOrchestrator
     @available_tools.select { |tool| tool_names.include?(tool.name.downcase) }
   end
 
-  def check_missing_parameters(required_tools)
+  def check_missing_parameters(required_tools, collected_params = {})
     missing_params = []
     
     required_tools.each do |tool|
@@ -43,11 +43,16 @@ class ToolOrchestrator
       tool.parameters&.each do |param_name, param|
         # Check if this parameter is required according to the schema
         if required_fields.include?(param_name) && param.default.nil?
-          missing_params << {
-            tool: tool.name,
-            parameter: param_name,
-            description: param.description || param_name
-          }
+          # Check if the parameter has already been provided
+          param_provided = collected_params.key?(param_name.to_s) || collected_params.key?(param_name.to_sym)
+          
+          unless param_provided
+            missing_params << {
+              tool: tool.name,
+              parameter: param_name,
+              description: param.description || param_name
+            }
+          end
         end
       end
     end
@@ -184,9 +189,14 @@ class ToolOrchestrator
     tool = client.tool(tool_call[:name])
     return { tool: tool_call[:name], error: "Tool not available" } unless tool
     
-    # Prepare parameters
+    # Get the tool's required fields
+    input_schema = tool.instance_variable_get(:@input_schema)
+    required_fields = input_schema&.dig('required') || []
+    
+    # Prepare parameters - only include relevant ones for this tool
     parameters = tool_call[:parameters] || {}
-    parameters.merge!(collected_params)
+    tool_params = collected_params.slice(*required_fields.map(&:to_s))
+    parameters.merge!(tool_params)
     
     result = tool.execute(**parameters)
     
@@ -219,8 +229,9 @@ class ToolOrchestrator
     # This is a simplified implementation
     # In practice, you'd need more sophisticated output mapping
     if result[:content] && !result[:error]
-      # Add the result to collected params for the next tool
-      collected_params["previous_tool_output"] = result[:content]
+      # Use a structured approach to avoid overwriting previous outputs
+      collected_params["tool_outputs"] ||= {}
+      collected_params["tool_outputs"][result[:tool]] = result[:content]
     end
   end
 end

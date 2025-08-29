@@ -30,7 +30,7 @@ class ConversationManager
     
     if required_tools.any?
       # 2. Check for missing parameters
-      missing_params = @tool_orchestrator.check_missing_parameters(required_tools)
+      missing_params = @tool_orchestrator.check_missing_parameters(required_tools, @state_manager.collected_params)
       
       if missing_params.any?
         # 3. Generate clarification question
