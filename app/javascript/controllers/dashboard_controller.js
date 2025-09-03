@@ -392,7 +392,7 @@ export default class extends Controller {
   }
   
   displayChat(chat) {
-    console.log("Displaying chat:", chat)
+    console.log("🔍 displayChat called with chat:", chat.title, "messages count:", chat.messages.length)
     this.chatTitleTarget.textContent = chat.title
     this.chatSubtitleTarget.textContent = `${chat.messages.length} messages`
     
@@ -400,16 +400,20 @@ export default class extends Controller {
     this.showMobileChatHeader(chat.title, `${chat.messages.length} messages`)
     
     // Clear and populate messages
+    console.log("🔍 displayChat - clearing messages container")
     this.messagesContainerTarget.innerHTML = ''
     
     if (chat.messages.length === 0) {
+      console.log("🔍 displayChat - showing welcome message")
       this.showWelcomeMessage()
     } else {
+      console.log("🔍 displayChat - adding", chat.messages.length, "messages")
       chat.messages.forEach(message => {
         this.addMessage(message)
       })
     }
     
+    console.log("🔍 displayChat - calling scrollToBottom")
     this.scrollToBottom()
     
     // Debug: Check if chat actions container is visible
@@ -434,6 +438,7 @@ export default class extends Controller {
   }
   
   addMessage(message) {
+    console.log("🔍 addMessage called with role:", message.role, "content preview:", message.content.substring(0, 50))
     const messageElement = document.createElement('div')
     messageElement.className = 'flex space-x-4 mb-4'
     
@@ -467,10 +472,14 @@ export default class extends Controller {
       </div>
     `
     
+    console.log("🔍 addMessage - appending message element to container")
     this.messagesContainerTarget.appendChild(messageElement)
+    console.log("🔍 addMessage - calling scrollToBottom")
+    this.scrollToBottom()
   }
   
   async sendMessage() {
+    console.log("🔍 sendMessage called")
     console.log("=== NEW sendMessage method called ===")
     const content = this.messageInputTarget.value.trim()
     console.log("Content:", content)
@@ -499,6 +508,7 @@ export default class extends Controller {
       role: 'user',
       content: content
     }
+    console.log("🔍 sendMessage - adding user message")
     this.addMessage(userMessage)
     
     // Check if this is the first message and update title
@@ -516,9 +526,11 @@ export default class extends Controller {
     this.messageInputTarget.value = ''
     this.messageInputTarget.style.height = '44px' // Reset to minimum height
     this.messageInputTarget.scrollTop = 0 // Reset scroll position
-    this.scrollToBottom()
+    console.log("🔍 sendMessage - calling scrollToBottom after clearing input")
+    this.scrollToBottom() // Always scroll to bottom after user sends message
     
     // Show thinking indicator
+    console.log("🔍 sendMessage - showing thinking indicator")
     this.showThinkingIndicator()
     
     try {
@@ -537,10 +549,13 @@ export default class extends Controller {
       if (response.ok) {
         const result = await response.json()
         if (result.assistant_message) {
+          console.log("🔍 AI response received:", result.assistant_message.content.substring(0, 50))
           // Hide thinking indicator
           this.hideThinkingIndicator()
           
+          console.log("🔍 Adding AI message to chat")
           this.addMessage(result.assistant_message)
+          console.log("🔍 AI message added, calling scrollToBottom")
           this.scrollToBottom()
           
           // If this was the first AI response, generate a better title
@@ -555,15 +570,19 @@ export default class extends Controller {
           console.log('Updating usage from message response...')
           this.updateUsageFromResult(result)
         } else if (result.system_message) {
+          console.log("🔍 System message received:", result.system_message.content.substring(0, 50))
           // Hide thinking indicator
           this.hideThinkingIndicator()
           
+          console.log("🔍 Adding system message to chat")
           this.addMessage(result.system_message)
+          console.log("🔍 System message added, calling scrollToBottom")
           this.scrollToBottom()
           
           // Update the chat list to reflect the new message count
           await this.updateChatList()
         } else {
+          console.log("🔍 No message in response")
           // Hide thinking indicator if no message received
           this.hideThinkingIndicator()
           console.error('No message in response:', result)
@@ -608,9 +627,42 @@ export default class extends Controller {
   }
   
   scrollToBottom() {
+    console.log("🔍 scrollToBottom called")
+    
+    // Find the actual scrollable container (parent with overflow-y-auto)
+    const scrollableContainer = this.findScrollableContainer()
+    if (!scrollableContainer) {
+      console.log("🔍 scrollToBottom - no scrollable container found")
+      return
+    }
+    
     setTimeout(() => {
-      this.messagesContainerTarget.scrollTop = this.messagesContainerTarget.scrollHeight
+      console.log("🔍 scrollToBottom - scrolling to bottom")
+      console.log("🔍 scrollToBottom - container:", scrollableContainer)
+      console.log("🔍 scrollToBottom - before scroll: scrollTop =", scrollableContainer.scrollTop)
+      console.log("🔍 scrollToBottom - scrollHeight =", scrollableContainer.scrollHeight, "clientHeight =", scrollableContainer.clientHeight)
+      
+      scrollableContainer.scrollTop = scrollableContainer.scrollHeight
+      
+      console.log("🔍 scrollToBottom - after scroll: scrollTop =", scrollableContainer.scrollTop)
     }, 100)
+  }
+  
+  findScrollableContainer() {
+    // Look for the parent container that has overflow-y-auto
+    let element = this.messagesContainerTarget
+    console.log("🔍 Starting search for scrollable container from:", element)
+    
+    while (element && element !== document.body) {
+      console.log("🔍 Checking element:", element.tagName, element.className)
+      if (element.classList.contains('overflow-y-auto')) {
+        console.log("🔍 Found scrollable container:", element)
+        return element
+      }
+      element = element.parentElement
+    }
+    console.log("🔍 No scrollable container found")
+    return null
   }
   
   openSettings() {
@@ -999,6 +1051,7 @@ export default class extends Controller {
   }
   
     showThinkingIndicator() {
+    console.log("🔍 showThinkingIndicator called")
     const thinkingElement = document.createElement('div')
     thinkingElement.className = 'flex space-x-4 mb-4'
     thinkingElement.id = 'thinking-indicator'
@@ -1018,14 +1071,22 @@ export default class extends Controller {
       </div>
     `
     
+    console.log("🔍 showThinkingIndicator - appending thinking element")
     this.messagesContainerTarget.appendChild(thinkingElement)
+    console.log("🔍 showThinkingIndicator - calling scrollToBottom")
     this.scrollToBottom()
   }
   
   hideThinkingIndicator() {
+    console.log("🔍 hideThinkingIndicator called")
     const thinkingElement = document.getElementById('thinking-indicator')
     if (thinkingElement) {
+      console.log("🔍 hideThinkingIndicator - removing thinking element")
       thinkingElement.remove()
+      console.log("🔍 hideThinkingIndicator - calling scrollToBottom")
+      this.scrollToBottom()
+    } else {
+      console.log("🔍 hideThinkingIndicator - no thinking element found")
     }
   }
   

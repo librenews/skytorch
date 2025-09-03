@@ -38,7 +38,7 @@ class ToolOrchestrator
 
     # Parse the response
     begin
-      tool_names = JSON.parse(response.content)
+      tool_names = parse_tool_response(response.content)
       Rails.logger.info "LLM detected tools: #{tool_names}"
       
       # Find the actual tool objects
@@ -46,7 +46,7 @@ class ToolOrchestrator
       Rails.logger.info "Found #{detected_tools.length} matching tools"
       
       detected_tools
-    rescue JSON::ParserError => e
+    rescue => e
       Rails.logger.error "Failed to parse LLM response: #{response.content}"
       Rails.logger.error "Error: #{e.message}"
       []
@@ -136,6 +136,9 @@ class ToolOrchestrator
     elsif content.is_a?(Array) && content.any?
       # Handle array of content items
       return content.map { |item| item.text || item.content }.join("\n")
+    elsif content.respond_to?(:text)
+      # Handle RubyLLM::MCP::Content objects
+      return content.text
     else
       return "I completed the requested operation. Let me know if you need anything else!"
     end
@@ -189,5 +192,53 @@ class ToolOrchestrator
         error: e.message
       }
     end
+  end
+
+  def parse_tool_response(response_content)
+    content = response_content.strip
+    
+    # Case 1: Raw JSON array
+    if content.start_with?('[') && content.end_with?(']')
+      begin
+        return JSON.parse(content)
+      rescue JSON::ParserError
+        # Continue to next case
+      end
+    end
+    
+    # Case 2: Markdown code block with JSON
+    if content.start_with?('```') && content.end_with?('```')
+      json_content = content.gsub(/^```\w*\n/, '').gsub(/\n```$/, '').strip
+      if json_content.start_with?('[') && json_content.end_with?(']')
+        begin
+          return JSON.parse(json_content)
+        rescue JSON::ParserError
+          # Continue to next case
+        end
+      end
+    end
+    
+    # Case 3: Single tool name (no brackets, just the name)
+    if content.match?(/^[a-z_]+$/)
+      return [content]
+    end
+    
+    # Case 4: Natural language - try to extract tool names
+    return extract_tools_from_natural_language(content)
+  end
+
+  def extract_tools_from_natural_language(content)
+    # Look for tool names in the text
+    all_tools = collect_all_tools
+    available_tool_names = all_tools.map(&:name)
+    found_tools = []
+    
+    available_tool_names.each do |tool_name|
+      if content.downcase.include?(tool_name.downcase)
+        found_tools << tool_name
+      end
+    end
+    
+    found_tools
   end
 end

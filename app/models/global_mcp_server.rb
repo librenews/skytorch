@@ -12,7 +12,7 @@ class GlobalMcpServer < ApplicationRecord
         transport_type: 'stdio',
         config: {
           command: 'npx',
-          args: ['@modelcontextprotocol/server-filesystem', '/tmp'],
+          args: ['@modelcontextprotocol/server-filesystem', '/private/tmp'],
           env: { 'NODE_ENV' => 'production' }
         },
         is_active: true

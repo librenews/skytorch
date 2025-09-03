@@ -7,14 +7,20 @@ class ConversationManager
   end
 
   def process_message(user_message)
-    # Check if we're waiting for parameters
-    if @state_manager.pending_tool_names.any?
+    # Check if we're waiting for parameters (check both pending tools and missing params)
+    if @state_manager.pending_tool_names.any? || @state_manager.missing_params.any?
       # Check if user is providing a parameter
       if looks_like_parameter(user_message)
-        @state_manager.fill_parameter(user_message)
+        # Get the actual tool objects for the pending tools BEFORE filling parameters
+        # If pending_tool_names is empty but we have missing_params, reconstruct from missing_params
+        tool_names = @state_manager.pending_tool_names.any? ? 
+          @state_manager.pending_tool_names : 
+          @state_manager.missing_params.map { |param| param['tool'] }.uniq
         
-        # Get the actual tool objects for the pending tools
-        pending_tools = get_tools_by_names(@state_manager.pending_tool_names)
+        pending_tools = get_tools_by_names(tool_names)
+        
+        # Now fill the parameter
+        @state_manager.fill_parameter(user_message)
         
         # Check if we have all parameters now
         missing_params = @tool_orchestrator.check_missing_parameters(
@@ -24,7 +30,7 @@ class ConversationManager
         
         if missing_params.empty?
           # Execute the tools
-          return execute_pending_tools(user_message)
+          return execute_pending_tools(user_message, pending_tools)
         else
           # Still need more parameters
           question = @tool_orchestrator.generate_clarification_question(missing_params)
@@ -85,15 +91,7 @@ class ConversationManager
     { type: :tool_response, content: response_content }
   end
 
-  def execute_pending_tools(original_message)
-    # Get the actual tool objects for the pending tools
-    # If pending_tool_names is empty but we have missing_params, reconstruct from missing_params
-    tool_names = @state_manager.pending_tool_names.any? ? 
-      @state_manager.pending_tool_names : 
-      @state_manager.missing_params.map { |param| param['tool'] }.uniq
-    
-    pending_tools = get_tools_by_names(tool_names)
-    
+  def execute_pending_tools(original_message, pending_tools)
     # Convert pending tools to tool calls
     tool_calls = pending_tools.map do |tool|
       { name: tool.name, parameters: {} }
